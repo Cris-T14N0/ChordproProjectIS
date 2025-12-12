@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
   res.redirect("/login");
 });
 
+// Authentication
 app.get("/login", (req, res) => {
   res.render("login");
 });
@@ -29,6 +30,7 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
+// Authenticated Views
 app.get("/dashboard", (req, res) => {
   res.render("dashboard");
 });
@@ -40,6 +42,8 @@ app.get("/library", (req, res) => {
 app.get("/setlists", (req, res) => {
   res.render("setlists");
 });
+
+// User Management
 
 // API Routes
 console.log("Loading auth routes...");
