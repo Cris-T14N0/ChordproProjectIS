@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #fef8f3;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    padding: 48px 40px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 420px;
+    border-top: 3px solid #d97706;
+}
+
+h1 {
+    margin-bottom: 8px;
+    font-size: 28px;
+    color: #1e293b;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    color: #64748b;
+    font-size: 15px;
+    margin-bottom: 32px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+}
+
+input {
+    padding: 11px 14px;
+    border: 1.5px solid #e7e5e4;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fafaf9;
+    transition: border 0.15s ease, background 0.15s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #ea580c;
+    background: white;
+}
+
+button {
+    margin-top: 4px;
+    padding: 12px;
+    background: #ea580c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease;
+}
+
+button:hover {
+    background: #c2410c;
+}
+
+.divider {
+    text-align: center;
+    margin: 28px 0 24px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.register-link {
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.register-link a {
+    color: #ea580c;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.register-link a:hover {
+    color: #c2410c;
+}
+
+.login-link {
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.login-link a {
+    color: #ea580c;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link a:hover {
+    color: #c2410c;
+}
+
+#message {
+    margin-top: 16px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.error {
+    color: #dc2626;
+}
+
+.success {
+    color: #16a854;
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 40px 28px;
+    }
+}

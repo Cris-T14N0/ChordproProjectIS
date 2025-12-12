@@ -1,0 +1,99 @@
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; }
+
+  .topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 64px; background: #1e293b; z-index: 30; align-items: center; padding: 0 20px; justify-content: space-between; }
+  .logo { color: white; font-size: 20px; font-weight: 600; }
+  .logo span { color: #fb923c; }
+
+  .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+  .hamburger span { width: 24px; height: 3px; background: white; border-radius: 3px; transition: 0.3s; }
+  .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
+  .hamburger.active span:nth-child(2) { opacity: 0; }
+  .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; opacity: 0; transition: 0.3s; }
+  .overlay.active { display: block; opacity: 1; }
+
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: #1e293b; z-index: 50; display: flex; flex-direction: column; transition: 0.3s; }
+  .sidebar-header { padding: 32px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-nav { flex: 1; padding: 24px 0; overflow-y: auto; }
+
+  .nav-item { display: flex; align-items: center; gap: 14px; padding: 16px 24px; color: #94a3b8; text-decoration: none; font-size: 15px; font-weight: 500; transition: 0.2s; position: relative; }
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+  .nav-item.active { background: #fb923c; color: white; border-radius: 0 20px 20px 0; margin-right: 12px; }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: -20px; width: 20px; height: 20px; background: transparent; border-bottom-right-radius: 20px; box-shadow: 0 10px 0 10px #fb923c; }
+  .nav-item.active::after { content: ''; position: absolute; left: 0; bottom: -20px; width: 20px; height: 20px; background: transparent; border-top-right-radius: 20px; box-shadow: 0 -10px 0 10px #fb923c; }
+  .nav-icon { width: 22px; height: 22px; opacity: 0.8; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .sidebar-footer { padding: 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; }
+  .user-avatar { width: 40px; height: 40px; background: #fb923c; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; }
+  .user-details h4 { color: #e2e8f0; font-size: 14px; font-weight: 600; }
+
+  .logout-btn { width: 100%; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+  .logout-btn:hover { background: rgba(239,68,68,0.25); color: #ef4444; }
+
+  .main-content { margin-left: 280px; padding: 32px; min-height: 100vh; transition: 0.3s; }
+
+  @media (max-width: 768px) {
+    .topbar { display: flex; }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left: 0; padding: 20px; padding-top: 84px; }
+  }
+</style>
+
+<div class="topbar">
+  <div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="logo">Your Chord<span>Pro</span></div>
+  <div style="width: 40px;"></div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">Your Chord<span>Pro</span></div>
+  </div>
+
+  <div class="sidebar-nav">
+    <a href="/dashboard.html" class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <a href="/library.html" class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+      </svg>
+      A minha biblioteca
+    </a>
+
+    <a href="/setlists.html" class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+      </svg>
+      As minhas setlists
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">U</div>
+      <div class="user-details">
+        <h4 id="userName">Utilizador</h4>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sair</button>
+  </div>
+</nav>
+
+<script src="js/navbar.js"></script>
