@@ -4,19 +4,44 @@ const cors = require("cors");
 
 const app = express();
 
+// Set EJS as templating engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
+
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Redirect root to login
-app.get("/", (req, res) => {
-  res.redirect("/login.html");
-});
-
-// Ficheiros estáticos e públicos.
+// Ficheiros estáticos e públicos
 app.use(express.static(path.join(__dirname, "../public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes - comentar temporariamente para testar
+// Page routes (EJS templates)
+app.get("/", (req, res) => {
+  res.redirect("/login");
+});
+
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
+app.get("/dashboard", (req, res) => {
+  res.render("dashboard");
+});
+
+app.get("/library", (req, res) => {
+  res.render("library");
+});
+
+app.get("/setlists", (req, res) => {
+  res.render("setlists");
+});
+
+// API Routes
 console.log("Loading auth routes...");
 try {
   app.use("/api/auth", require("./routes/auth.routes"));

@@ -45,7 +45,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
       messageDiv.className = 'success';
       
       setTimeout(() => {
-        window.location.href = '/login.html';
+        window.location.href = '/login';  // ← CHANGED
       }, 1500);
     } else {
       messageDiv.textContent = data.message || 'Erro ao criar conta';

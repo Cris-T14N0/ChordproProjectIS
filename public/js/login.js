@@ -26,7 +26,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       messageDiv.className = 'success';
       
       setTimeout(() => {
-        window.location.href = '/dashboard.html';
+        window.location.href = '/dashboard';  // ← CHANGED
       }, 500);
     } else {
       messageDiv.textContent = data.message || 'Erro ao fazer login';
