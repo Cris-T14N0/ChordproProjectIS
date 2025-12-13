@@ -21,6 +21,15 @@ app.get("/", (req, res) => {
   res.redirect("/login");
 });
 
+// Add editor route
+app.get("/editor", (req, res) => {
+  res.render("editor");
+});
+
+app.get("/editor/:id", (req, res) => {
+  res.render("editor");
+});
+
 // Authentication
 app.get("/login", (req, res) => {
   res.render("login");
@@ -59,7 +68,7 @@ try {
 
 console.log("Loading cifras routes...");
 try {
-  app.use("/api/cifras", require("./routes/cifras.routes"));
+  app.use("/api/cifras", require("./routes/songs.routes"));
   console.log("Cifras routes loaded successfully");
 } catch (error) {
   console.error("Error loading cifras routes:", error);
@@ -79,6 +88,14 @@ try {
   console.log("Users routes loaded successfully");
 } catch (error) {
   console.error("Error loading users routes:", error);
+}
+
+console.log("Loading songs routes...");
+try {
+  app.use("/api/songs", require("./routes/songs.routes"));
+  console.log("Songs routes loaded successfully");
+} catch (error) {
+  console.error("Error loading songs routes:", error);
 }
 
 module.exports = app;
