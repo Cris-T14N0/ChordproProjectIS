@@ -1,4 +1,3 @@
-
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -97,16 +96,54 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Set user name
-    document.getElementById('userName').textContent = 'Utilizador';
-    document.getElementById('userAvatar').textContent = 'U';
+    // Fetch and set user info
+    async function loadUserInfo() {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            console.log('No token found');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:3000/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const user = await response.json();
+                
+                // Set username
+                document.getElementById('userName').textContent = user.username;
+                
+                // Set avatar (first letter of username)
+                const firstLetter = user.username.charAt(0).toUpperCase();
+                document.getElementById('userAvatar').textContent = firstLetter;
+                
+            } else {
+                console.error('Failed to fetch user info');
+                // Token might be invalid, redirect to login
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching user info:', error);
+        }
+    }
+
+    // Load user info on page load
+    loadUserInfo();
 
 });
 
 // Logout function (global scope)
 function logout() {
-    alert('Logout clicked!');
-    console.log('User logged out');
-    // Add your logout logic here
-    // window.location.href = '/login';
+    localStorage.removeItem('token');
+    window.location.href = '/login';
 }

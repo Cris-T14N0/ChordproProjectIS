@@ -44,6 +44,9 @@ app.get("/setlists", (req, res) => {
 });
 
 // User Management
+app.get("/profile", (req, res) => {
+  res.render("profile");
+});
 
 // API Routes
 console.log("Loading auth routes...");
