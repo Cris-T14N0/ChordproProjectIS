@@ -211,11 +211,56 @@ async function deleteSong(req, res) {
   }
 }
 
+// Renderiza a página de visualização de uma música
+async function viewSong(req, res) {
+  try {
+    const songId = req.params.id;
+    const userId = req.userId;
+
+    const [songs] = await pool.query(
+      "SELECT * FROM songs WHERE id = ? AND user_id = ?",
+      [songId, userId]
+    );
+
+    // Verificar se a música existe
+    if (songs.length === 0) {
+      return res.render('viewer', {
+        song: null,
+        user: req.user
+      });
+    }
+
+    const song = songs[0];
+
+    // Ler conteúdo do ficheiro
+    const content = await fs.readFile(song.file_path, "utf8");
+
+    // Renderizar a página do viewer com os dados da música
+    res.render('viewer', {
+      song: {
+        id: song.id,
+        title: song.title,
+        artist: song.artist || '',
+        content: content
+      },
+      user: req.user
+    });
+
+  } catch (error) {
+    console.error('Erro ao visualizar música:', error);
+    res.render('viewer', {
+      song: null,
+      user: req.user
+    });
+  }
+}
+
 module.exports = {
   uploadSong,
   getUserSongs,
   getSong,
   updateSong,
   createSong,
-  deleteSong
+  deleteSong,
+  viewSong
 };

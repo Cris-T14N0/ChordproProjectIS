@@ -30,6 +30,11 @@ app.get("/editor/:id", (req, res) => {
   res.render("editor");
 });
 
+// Viewer route (simples como o editor)
+app.get("/viewer/:id", (req, res) => {
+  res.render("viewer");
+});
+
 // Authentication
 app.get("/login", (req, res) => {
   res.render("login");

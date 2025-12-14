@@ -1,4 +1,4 @@
-// Comprehensive ChordPro Parser - No external dependencies needed!
+// Comprehensive ChordPro Parser - Mobile Optimized
 // Supports ChordPro v6 specification with extensive directive support
 
 function parseChordPro(input) {
@@ -7,7 +7,7 @@ function parseChordPro(input) {
     }
 
     const lines = input.split('\n');
-    let html = '<div class="chordpro-song" style="font-family: \'Courier New\', monospace; line-height: 2; max-width: 800px;">';
+    let html = '<div class="chordpro-song" style="font-family: \'Courier New\', monospace; line-height: 1.8; max-width: 100%; word-wrap: break-word;">';
     
     // Song metadata
     const metadata = {
@@ -33,10 +33,10 @@ function parseChordPro(input) {
     let inTab = false;
     let inGrid = false;
     let currentStyles = {
-        chordColor: '#2563eb',
-        chordSize: '0.95em',
+        chordColor: '#f97316',
+        chordSize: '0.85em',
         textColor: '#1e293b',
-        textSize: '1em'
+        textSize: '0.95em'
     };
 
     // First pass: collect metadata
@@ -49,28 +49,28 @@ function parseChordPro(input) {
 
     // Render metadata header
     if (metadata.title) {
-        html += `<h2 style="margin: 0 0 5px 0; color: #1e293b; font-size: 1.5em;">${escapeHtml(metadata.title)}</h2>`;
+        html += `<h2 style="margin: 0 0 8px 0; color: #1e293b; font-size: 1.3em; line-height: 1.3;">${escapeHtml(metadata.title)}</h2>`;
     }
     
     if (metadata.subtitle.length > 0) {
         metadata.subtitle.forEach(st => {
-            html += `<p style="margin: 0 0 3px 0; color: #64748b; font-size: 1.1em;">${escapeHtml(st)}</p>`;
+            html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 1em; line-height: 1.3;">${escapeHtml(st)}</p>`;
         });
     }
     
     if (metadata.artist.length > 0) {
-        html += `<p style="margin: 0 0 3px 0; color: #64748b; font-style: italic;">Artist: ${escapeHtml(metadata.artist.join(', '))}</p>`;
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-style: italic; font-size: 0.9em;">${escapeHtml(metadata.artist.join(', '))}</p>`;
     }
     
     if (metadata.composer.length > 0) {
-        html += `<p style="margin: 0 0 3px 0; color: #64748b; font-size: 0.9em;">Composer: ${escapeHtml(metadata.composer.join(', '))}</p>`;
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.composer.join(', '))}</p>`;
     }
     
     if (metadata.lyricist.length > 0) {
-        html += `<p style="margin: 0 0 3px 0; color: #64748b; font-size: 0.9em;">Lyricist: ${escapeHtml(metadata.lyricist.join(', '))}</p>`;
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.lyricist.join(', '))}</p>`;
     }
     
-    // Key, Tempo, Capo, Time signature in one line
+    // Key, Tempo, Capo, Time signature - responsive layout
     let infoLine = [];
     if (metadata.key) infoLine.push(`Key: ${escapeHtml(metadata.key)}`);
     if (metadata.time) infoLine.push(`Time: ${escapeHtml(metadata.time)}`);
@@ -79,15 +79,15 @@ function parseChordPro(input) {
     if (metadata.duration) infoLine.push(`Duration: ${escapeHtml(metadata.duration)}`);
     
     if (infoLine.length > 0) {
-        html += `<p style="margin: 0 0 10px 0; color: #64748b; font-size: 0.9em;">${infoLine.join(' • ')}</p>`;
+        html += `<p style="margin: 0 0 10px 0; color: #64748b; font-size: 0.85em; line-height: 1.5;">${infoLine.join(' • ')}</p>`;
     }
     
     if (metadata.album) {
-        html += `<p style="margin: 0 0 3px 0; color: #64748b; font-size: 0.9em;">Album: ${escapeHtml(metadata.album)}</p>`;
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.album)}</p>`;
     }
     
     if (metadata.copyright.length > 0) {
-        html += `<p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.85em;">© ${escapeHtml(metadata.copyright.join(' • '))}</p>`;
+        html += `<p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.8em; line-height: 1.4;">${escapeHtml(metadata.copyright.join(' • '))}</p>`;
     } else {
         html += '<div style="height: 15px;"></div>';
     }
@@ -142,15 +142,15 @@ function parseChordPro(input) {
             
             // Handle chorus shorthand
             if (directive.type === 'chorus') {
-                html += '<div style="margin-left: 20px; border-left: 3px solid #3b82f6; padding-left: 15px; font-style: italic; color: #64748b;">';
-                html += '<p style="margin: 5px 0;">[Repeat Chorus]</p>';
+                html += '<div style="margin-left: 8px; border-left: 3px solid #f97316; padding-left: 8px; font-style: italic; color: #64748b;">';
+                html += '<p style="margin: 5px 0; font-size: 0.9em;">[Repetir Refrão]</p>';
                 html += '</div>';
                 continue;
             }
             
             // Handle column breaks and page breaks
             if (directive.type === 'column_break' || directive.type === 'new_page') {
-                html += '<div style="height: 30px; border-top: 2px dashed #cbd5e1; margin: 20px 0;"></div>';
+                html += '<div style="height: 20px; border-top: 2px dashed #cbd5e1; margin: 15px 0;"></div>';
                 continue;
             }
             
@@ -165,13 +165,13 @@ function parseChordPro(input) {
 
         // Empty line - add spacing
         if (trimmed === '') {
-            html += '<div style="height: 15px;"></div>';
+            html += '<div style="height: 12px;"></div>';
             continue;
         }
 
         // Handle TAB content (preserve formatting)
         if (inTab) {
-            html += `<div style="font-family: 'Courier New', monospace; white-space: pre; color: ${currentStyles.textColor}; font-size: ${currentStyles.textSize};">${escapeHtml(line)}</div>`;
+            html += `<div style="font-family: 'Courier New', monospace; white-space: pre-wrap; overflow-x: auto; color: ${currentStyles.textColor}; font-size: ${currentStyles.textSize};">${escapeHtml(line)}</div>`;
             continue;
         }
         
@@ -311,21 +311,30 @@ function updateMetadata(metadata, directive) {
 
 function getSectionStartHTML(section, label) {
     const sectionStyles = {
-        chorus: 'margin-left: 20px; border-left: 3px solid #3b82f6; padding-left: 15px;',
-        verse: 'margin: 15px 0;',
-        bridge: 'margin: 15px 0; border-left: 3px solid #f59e0b; padding-left: 15px;',
-        part: 'margin: 15px 0; border-left: 3px solid #8b5cf6; padding-left: 15px;',
-        tab: 'background: #f8fafc; padding: 10px; border-radius: 4px; margin: 10px 0;',
-        grid: 'background: #f8fafc; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace;'
+        chorus: 'margin-left: 8px; border-left: 3px solid #f97316; padding-left: 8px;',
+        verse: 'margin: 12px 0;',
+        bridge: 'margin: 12px 0; border-left: 3px solid #f59e0b; padding-left: 12px;',
+        part: 'margin: 12px 0; border-left: 3px solid #8b5cf6; padding-left: 12px;',
+        tab: 'background: #f8fafc; padding: 8px; border-radius: 4px; margin: 10px 0;',
+        grid: 'background: #f8fafc; padding: 8px; border-radius: 4px; margin: 10px 0; font-family: monospace;'
     };
     
-    const style = sectionStyles[section] || 'margin: 15px 0;';
+    // Default section names
+    const defaultNames = {
+        chorus: 'Refrão',
+        verse: 'Verso',
+        bridge: 'Ponte',
+        part: 'Parte',
+        tab: 'Tablatura',
+        grid: 'Grade'
+    };
+    
+    const style = sectionStyles[section] || 'margin: 12px 0;';
     let html = `<div style="${style}">`;
     
-    if (label) {
-        const labelText = section.charAt(0).toUpperCase() + section.slice(1) + (label ? ': ' + label : '');
-        html += `<p style="font-weight: bold; color: #475569; margin: 0 0 5px 0;">${escapeHtml(labelText)}</p>`;
-    }
+    // Always show label: use custom label if provided, otherwise use default name
+    const displayLabel = label || defaultNames[section] || (section.charAt(0).toUpperCase() + section.slice(1));
+    html += `<p style="font-weight: bold; color: #475569; margin: 0 0 5px 0; font-size: 0.9em;">${escapeHtml(displayLabel)}</p>`;
     
     return html;
 }
@@ -336,10 +345,10 @@ function getSectionEndHTML(section) {
 
 function getCommentHTML(text, variant) {
     const styles = {
-        comment: 'color: #64748b; font-style: italic; margin: 10px 0; font-weight: 500;',
-        comment_italic: 'color: #64748b; font-style: italic; margin: 10px 0;',
-        comment_box: 'color: #1e293b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 4px; margin: 10px 0;',
-        guitar_comment: 'color: #059669; font-style: italic; margin: 10px 0; font-size: 0.9em;'
+        comment: 'color: #64748b; font-style: italic; margin: 8px 0; font-weight: 500; font-size: 0.9em;',
+        comment_italic: 'color: #64748b; font-style: italic; margin: 8px 0; font-size: 0.9em;',
+        comment_box: 'color: #1e293b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 4px; margin: 8px 0; font-size: 0.9em;',
+        guitar_comment: 'color: #059669; font-style: italic; margin: 8px 0; font-size: 0.85em;'
     };
     
     const style = styles[variant] || styles.comment;
@@ -353,11 +362,11 @@ function applyStyle(currentStyles, directive) {
     // Reset to default if empty
     if (!value) {
         if (name.includes('chord')) {
-            currentStyles.chordColor = '#2563eb';
-            currentStyles.chordSize = '0.95em';
+            currentStyles.chordColor = '#f97316';
+            currentStyles.chordSize = '0.85em';
         } else if (name.includes('text')) {
             currentStyles.textColor = '#1e293b';
-            currentStyles.textSize = '1em';
+            currentStyles.textSize = '0.95em';
         }
         return;
     }
@@ -388,17 +397,17 @@ function parseLineWithChords(line, styles) {
 
     if (chords.length === 0) {
         // No chords, just return the line
-        return `<p style="margin: 5px 0; color: ${styles.textColor}; font-size: ${styles.textSize};">${escapeHtml(line)}</p>`;
+        return `<p style="margin: 4px 0; color: ${styles.textColor}; font-size: ${styles.textSize};">${escapeHtml(line)}</p>`;
     }
 
     // Build HTML with chords above lyrics
-    let html = '<div style="position: relative; margin: 10px 0;">';
+    let html = '<div style="position: relative; margin: 8px 0;">';
     
     // Chord line
-    html += `<div style="position: relative; height: 20px; color: ${styles.chordColor}; font-weight: bold; font-size: ${styles.chordSize};">`;
+    html += `<div style="position: relative; min-height: 18px; color: ${styles.chordColor}; font-weight: bold; font-size: ${styles.chordSize};">`;
     for (let {chord, offset} of chords) {
         const position = offset * 0.6; // approximate character width
-        html += `<span style="position: absolute; left: ${position}em;">${escapeHtml(chord)}</span>`;
+        html += `<span style="position: absolute; left: ${position}em; white-space: nowrap;">${escapeHtml(chord)}</span>`;
     }
     html += '</div>';
 
@@ -412,11 +421,11 @@ function parseLineWithChords(line, styles) {
 
 function parseGridLine(line) {
     // Simple grid parser - treats | as bar lines and chords as cells
-    if (!line.trim()) return '<div style="height: 10px;"></div>';
+    if (!line.trim()) return '<div style="height: 8px;"></div>';
     
     const cleaned = line.replace(/\|\|/g, '<span style="font-weight: bold;">||</span>')
                        .replace(/\|/g, '<span style="color: #64748b;">|</span>');
-    return `<div style="font-family: 'Courier New', monospace; white-space: pre; padding: 2px 0;">${cleaned}</div>`;
+    return `<div style="font-family: 'Courier New', monospace; white-space: pre-wrap; overflow-x: auto; padding: 2px 0; font-size: 0.9em;">${cleaned}</div>`;
 }
 
 function escapeHtml(text) {
