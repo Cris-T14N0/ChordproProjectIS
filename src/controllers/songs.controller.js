@@ -1,7 +1,6 @@
 const pool = require("../models/db");
 const path = require("path");
 const fs = require("fs").promises;
-const ChordSheetJS = require("chordsheetjs");
 
 // Upload and parse ChordPro file
 async function uploadSong(req, res) {
@@ -13,27 +12,13 @@ async function uploadSong(req, res) {
     const userId = req.userId;
     const filePath = req.file.path;
 
-    // Read file content to extract metadata
-    const content = await fs.readFile(filePath, "utf8");
+    // Extract title from filename
+    const title = req.file.originalname.replace(/\.(chopro|chordpro|cho|crd|pro)$/i, "");
 
-    // Parse with ChordSheetJS to extract metadata
-    const parser = new ChordSheetJS.ChordProParser();
-    let song;
-    let title = req.file.originalname.replace(/\.(chopro|chordpro|cho|crd|pro)$/i, "");
-    let artist = null;
-
-    try {
-      song = parser.parse(content);
-      title = song.metadata.title || title;
-      artist = song.metadata.artist || null;
-    } catch (parseError) {
-      console.log("Could not parse ChordPro metadata, using filename");
-    }
-
-    // Store only path in database
+    // Store in database with is_public default to 1 (public)
     const [result] = await pool.query(
-      "INSERT INTO songs (user_id, title, artist, file_path) VALUES (?, ?, ?, ?)",
-      [userId, title, artist, filePath]
+      "INSERT INTO songs (user_id, title, artist, file_path, is_public) VALUES (?, ?, ?, ?, ?)",
+      [userId, title, null, filePath, 1]
     );
 
     res.json({
@@ -41,7 +26,7 @@ async function uploadSong(req, res) {
       song: {
         id: result.insertId,
         title,
-        artist
+        artist: null
       }
     });
   } catch (error) {
@@ -68,14 +53,19 @@ async function getUserSongs(req, res) {
 }
 
 // Get single song with content from file
+// ⭐ MODIFICADO: Agora permite acesso a músicas públicas de outros users
 async function getSong(req, res) {
   try {
     const songId = req.params.id;
     const userId = req.userId;
 
+    // Buscar música com informações do dono
     const [songs] = await pool.query(
-      "SELECT * FROM songs WHERE id = ? AND user_id = ?",
-      [songId, userId]
+      `SELECT s.*, u.username as owner_username 
+       FROM songs s 
+       JOIN users u ON s.user_id = u.id 
+       WHERE s.id = ?`,
+      [songId]
     );
 
     if (songs.length === 0) {
@@ -84,9 +74,26 @@ async function getSong(req, res) {
 
     const song = songs[0];
 
+    // ⭐ VERIFICAÇÃO DE ACESSO:
+    // Pode aceder se: é o dono OU a música é pública
+    const isOwner = song.user_id === userId;
+    const isPublic = song.is_public === 1;
+
+    if (!isOwner && !isPublic) {
+      return res.status(403).json({ message: "Sem permissão para visualizar esta música" });
+    }
+
     // Read content from file
-    const content = await fs.readFile(song.file_path, "utf8");
-    song.content = content;
+    try {
+      const content = await fs.readFile(song.file_path, "utf8");
+      song.content = content;
+    } catch (fileError) {
+      console.error("Erro ao ler ficheiro:", fileError);
+      return res.status(500).json({ message: "Erro ao ler conteúdo da música" });
+    }
+    
+    // ⭐ Adicionar flag para saber se é o dono
+    song.is_owner = isOwner;
 
     res.json(song);
   } catch (error) {
@@ -100,30 +107,53 @@ async function updateSong(req, res) {
   try {
     const songId = req.params.id;
     const userId = req.userId;
-    const { content, title, artist } = req.body;
+    const { content, title, artist, is_public } = req.body;
 
     if (!content) {
       return res.status(400).json({ message: "Conteúdo não pode estar vazio" });
     }
 
-    // Verify ownership
+    // Verify ownership - só o dono pode editar
     const [songs] = await pool.query(
-      "SELECT file_path FROM songs WHERE id = ? AND user_id = ?",
+      "SELECT file_path, title FROM songs WHERE id = ? AND user_id = ?",
       [songId, userId]
     );
 
     if (songs.length === 0) {
-      return res.status(404).json({ message: "Música não encontrada" });
+      return res.status(404).json({ message: "Música não encontrada ou sem permissão para editar" });
     }
 
-    // Update file on disk
-    const filePath = songs[0].file_path;
-    await fs.writeFile(filePath, content, "utf8");
+    const oldFilePath = songs[0].file_path;
+    const oldTitle = songs[0].title;
+    let newFilePath = oldFilePath;
 
-    // Update metadata in database
+    // Check if title has changed
+    if (title && title !== oldTitle) {
+      // Generate new filename based on new title
+      const newFilename = title.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".chopro";
+      const dirPath = path.dirname(oldFilePath);
+      newFilePath = path.join(dirPath, newFilename);
+
+      // Rename the file if the new path is different
+      if (oldFilePath !== newFilePath) {
+        try {
+          await fs.rename(oldFilePath, newFilePath);
+          console.log(`File renamed from ${oldFilePath} to ${newFilePath}`);
+        } catch (renameError) {
+          console.error("Failed to rename file:", renameError);
+          // If rename fails, keep the old path
+          newFilePath = oldFilePath;
+        }
+      }
+    }
+
+    // Update file content on disk
+    await fs.writeFile(newFilePath, content, "utf8");
+
+    // Update metadata in database including is_public and new file path
     await pool.query(
-      "UPDATE songs SET title = ?, artist = ? WHERE id = ? AND user_id = ?",
-      [title || null, artist || null, songId, userId]
+      "UPDATE songs SET title = ?, artist = ?, is_public = ?, file_path = ? WHERE id = ? AND user_id = ?",
+      [title || null, artist || null, is_public ? 1 : 0, newFilePath, songId, userId]
     );
 
     res.json({ message: "Música atualizada com sucesso" });
@@ -137,7 +167,7 @@ async function updateSong(req, res) {
 async function createSong(req, res) {
   try {
     const userId = req.userId;
-    const { content, title, artist } = req.body;
+    const { content, title, artist, is_public } = req.body;
 
     if (!content) {
       return res.status(400).json({ message: "Conteúdo não pode estar vazio" });
@@ -158,10 +188,10 @@ async function createSong(req, res) {
     // Write file
     await fs.writeFile(filePath, content, "utf8");
 
-    // Store in database
+    // Store in database with is_public
     const [result] = await pool.query(
-      "INSERT INTO songs (user_id, title, artist, file_path) VALUES (?, ?, ?, ?)",
-      [userId, title, artist || null, filePath]
+      "INSERT INTO songs (user_id, title, artist, file_path, is_public) VALUES (?, ?, ?, ?, ?)",
+      [userId, title, artist || null, filePath, is_public ? 1 : 0]
     );
 
     res.json({
@@ -184,74 +214,35 @@ async function deleteSong(req, res) {
     const songId = req.params.id;
     const userId = req.userId;
 
-    // Get file path
+    // Get file path - só o dono pode eliminar
     const [songs] = await pool.query(
       "SELECT file_path FROM songs WHERE id = ? AND user_id = ?",
       [songId, userId]
     );
 
     if (songs.length === 0) {
-      return res.status(404).json({ message: "Música não encontrada" });
+      return res.status(404).json({ message: "Música não encontrada ou sem permissão para eliminar" });
     }
 
-    // Delete file
-    try {
-      await fs.unlink(songs[0].file_path);
-    } catch (fileError) {
-      console.log("File already deleted or not found");
-    }
+    const filePath = songs[0].file_path;
 
-    // Delete from database
+    // Delete from database first
     await pool.query("DELETE FROM songs WHERE id = ? AND user_id = ?", [songId, userId]);
+
+    // Then delete file from disk
+    try {
+      await fs.unlink(filePath);
+      console.log(`File deleted: ${filePath}`);
+    } catch (fileError) {
+      console.error(`Failed to delete file: ${filePath}`, fileError);
+      // Don't fail the request if file deletion fails
+      // The database record is already deleted
+    }
 
     res.json({ message: "Música eliminada com sucesso" });
   } catch (error) {
     console.error("Erro ao eliminar música:", error);
     res.status(500).json({ message: "Erro ao eliminar música" });
-  }
-}
-
-// Renderiza a página de visualização de uma música
-async function viewSong(req, res) {
-  try {
-    const songId = req.params.id;
-    const userId = req.userId;
-
-    const [songs] = await pool.query(
-      "SELECT * FROM songs WHERE id = ? AND user_id = ?",
-      [songId, userId]
-    );
-
-    // Verificar se a música existe
-    if (songs.length === 0) {
-      return res.render('viewer', {
-        song: null,
-        user: req.user
-      });
-    }
-
-    const song = songs[0];
-
-    // Ler conteúdo do ficheiro
-    const content = await fs.readFile(song.file_path, "utf8");
-
-    // Renderizar a página do viewer com os dados da música
-    res.render('viewer', {
-      song: {
-        id: song.id,
-        title: song.title,
-        artist: song.artist || '',
-        content: content
-      },
-      user: req.user
-    });
-
-  } catch (error) {
-    console.error('Erro ao visualizar música:', error);
-    res.render('viewer', {
-      song: null,
-      user: req.user
-    });
   }
 }
 
@@ -261,6 +252,5 @@ module.exports = {
   getSong,
   updateSong,
   createSong,
-  deleteSong,
-  viewSong
+  deleteSong
 };

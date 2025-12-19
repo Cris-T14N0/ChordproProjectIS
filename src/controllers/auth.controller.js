@@ -5,25 +5,69 @@ const { generateToken } = require("../utils/jwt");
 // Registo
 async function registerUser(req, res) {
   const { username, email, password } = req.body;
-  if (!username || !email || !password) return res.status(400).json({ message: "Campos faltando" });
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Campos faltando" });
+  }
 
-  const hashed = await bcrypt.hash(password, 10);
-  await pool.query("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", [username, email, hashed]);
-  res.json({ message: "Utilizador registado com sucesso" });
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
+      [username, email, hashed]
+    );
+    res.json({ message: "Utilizador registado com sucesso" });
+  } catch (error) {
+    console.error('Erro ao registar utilizador:', error);
+    res.status(500).json({ message: "Erro no servidor" });
+  }
 }
 
-// Login
+// Login - Sets HTTP-only cookie
 async function loginUser(req, res) {
-  const { email, password } = req.body;
-  const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-  const user = rows[0];
-  if (!user) return res.status(400).json({ message: "Email ou password inválidos" });
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email e password são obrigatórios" });
+    }
 
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) return res.status(400).json({ message: "Email ou password inválidos" });
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+    const user = rows[0];
+    
+    if (!user) {
+      return res.status(400).json({ message: "Email ou password inválidos" });
+    }
 
-  const token = generateToken(user);
-  res.json({ token });
+    const valid = await bcrypt.compare(password, user.password_hash);
+    
+    if (!valid) {
+      return res.status(400).json({ message: "Email ou password inválidos" });
+    }
+
+    // Generate token
+    const token = generateToken(user);
+    
+    // Set HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+
+    // Return success
+    res.json({ 
+      message: "Login bem-sucedido",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao fazer login:', error);
+    res.status(500).json({ message: "Erro no servidor" });
+  }
 }
 
 // Get current user info
@@ -135,10 +179,17 @@ async function updatePassword(req, res) {
   }
 }
 
+// Logout
+async function logoutUser(req, res) {
+  res.clearCookie("token");
+  res.json({ message: "Logout bem-sucedido" });
+}
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
   updateUsername,
-  updatePassword
+  updatePassword,
+  logoutUser
 };

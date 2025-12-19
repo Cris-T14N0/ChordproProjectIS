@@ -1,20 +1,33 @@
 const { SECRET } = require("../utils/jwt");
 const jwt = require("jsonwebtoken");
 
+/**
+ * Middleware to protect routes.
+ * Expects a JWT stored in an HTTP-only cookie named "token".
+ */
 function authMiddleware(req, res, next) {
-  const token = req.headers["authorization"]?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Token não fornecido" });
+  // Read token from cookies
+  const token = req.cookies?.token;
+
+  // If no token, redirect to login page
+  if (!token) {
+    return res.redirect("/login");
+  }
 
   try {
+    // Verify the token
     const decoded = jwt.verify(token, SECRET);
 
-    // salva id corretamente
+    // Attach user info to request object
     req.userId = decoded.id;
     req.user = decoded;
 
+    // Continue to next middleware / route handler
     next();
   } catch (err) {
-    res.status(401).json({ message: "Token inválido" });
+    console.error("Invalid token:", err.message);
+    // Token is invalid or expired → redirect to login
+    return res.redirect("/login");
   }
 }
 

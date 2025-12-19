@@ -7,18 +7,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Load user information
 async function loadUserInfo() {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-
     try {
         const response = await fetch(`${API_URL}/api/auth/me`, {
             method: 'GET',
+            credentials: 'include', // Send cookies
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -42,7 +35,6 @@ async function loadUserInfo() {
             }
         } else {
             if (response.status === 401) {
-                localStorage.removeItem('token');
                 window.location.href = '/login';
             }
         }
@@ -72,7 +64,6 @@ async function updateUsername() {
     const username = document.getElementById('username').value.trim();
     const btn = document.getElementById('usernameBtn');
     const messageDiv = document.getElementById('usernameMessage');
-    const token = localStorage.getItem('token');
 
     if (!username) {
         showMessage('usernameMessage', 'Username não pode estar vazio', 'error');
@@ -85,8 +76,8 @@ async function updateUsername() {
     try {
         const response = await fetch(`${API_URL}/api/auth/update-username`, {
             method: 'PUT',
+            credentials: 'include', // Send cookies
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ username })
@@ -117,7 +108,6 @@ async function updatePassword() {
     const confirmPassword = document.getElementById('confirmPassword').value;
     const btn = document.getElementById('passwordBtn');
     const messageDiv = document.getElementById('passwordMessage');
-    const token = localStorage.getItem('token');
 
     // Validate passwords match
     if (newPassword !== confirmPassword) {
@@ -136,8 +126,8 @@ async function updatePassword() {
     try {
         const response = await fetch(`${API_URL}/api/auth/update-password`, {
             method: 'PUT',
+            credentials: 'include', // Send cookies
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ currentPassword, newPassword })

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerir Setlist - ChordPro</title>
+    <link rel="stylesheet" href="/css/setlist-management.css">
+</head>
+
+<body>
+    <%- include('../../partials/navbar') %>
+
+        <div class="main-content">
+            <a href="#" class="back-button" onclick="window.history.back(); return false;">
+                <span class="back-arrow">←</span>
+                <span>Voltar</span>
+            </a>
+
+            <div class="header-section">
+                <div class="title-row">
+                    <div class="title-info">
+                        <h1 id="setlist-title">A carregar...</h1>
+                        <span class="badge" id="visibility-badge"></span>
+                    </div>
+                    <button class="add-button" id="add-song-btn">
+                        + Adicionar Música
+                    </button>
+                </div>
+                <div class="stats-row" id="statistics"></div>
+            </div>
+
+            <div class="content-card">
+                <ul class="track-list" id="tracks-container">
+                    <li style="list-style: none;">
+                        <div class="placeholder-content">
+                            <p>A carregar músicas...</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h2 class="modal-title">Escolher Música</h2>
+                    <button class="modal-close" id="close-modal-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="modal-search" id="modal-search"
+                        placeholder="Filtrar por título ou artista..." autocomplete="off">
+                    <div class="songs-list" id="modal-songs-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast-notification" id="toast-message"></div>
+
+        <script src="/js/setlist-management.js"></script>
+</body>
+
+</html>

@@ -1,13 +1,13 @@
-// Comprehensive ChordPro Parser - Mobile Optimized
-// Supports ChordPro v6 specification with extensive directive support
+// Mobile-Optimized ChordPro Parser with Responsive Column Support
+// Editor: Shows subtle dotted line indicator
+// Viewer: Creates responsive columns that stack on mobile
 
-function parseChordPro(input) {
+function parseChordPro(input, isViewer = false) {
     if (!input || !input.trim()) {
-        return '<p style="color: #94a3b8; text-align: center;">A pré-visualização aparecerá aqui...</p>';
+        return '<p style="color: #94a3b8; text-align: center;">Preview will appear here...</p>';
     }
 
     const lines = input.split('\n');
-    let html = '<div class="chordpro-song" style="font-family: \'Courier New\', monospace; line-height: 1.8; max-width: 100%; word-wrap: break-word;">';
     
     // Song metadata
     const metadata = {
@@ -26,8 +26,25 @@ function parseChordPro(input) {
         duration: null,
         capo: null
     };
-    
-    // State tracking
+
+    // First pass: collect metadata
+    for (let line of lines) {
+        const directive = parseDirective(line.trim());
+        if (directive && directive.type === 'meta') {
+            updateMetadata(metadata, directive);
+        }
+    }
+
+    // If viewer mode, check for column breaks and split content
+    if (isViewer) {
+        return parseChordProWithColumns(lines, metadata);
+    } else {
+        return parseChordProSimple(lines, metadata);
+    }
+}
+
+function parseChordProSimple(lines, metadata) {
+    let html = '';
     let inSection = null;
     let sectionLabel = null;
     let inTab = false;
@@ -39,60 +56,13 @@ function parseChordPro(input) {
         textSize: '0.95em'
     };
 
-    // First pass: collect metadata
-    for (let line of lines) {
-        const directive = parseDirective(line.trim());
-        if (directive && directive.type === 'meta') {
-            updateMetadata(metadata, directive);
-        }
-    }
+    // Start main container
+    html += '<div class="chordpro-song" style="font-family: \'Courier New\', monospace; line-height: 1.8; max-width: 100%; word-wrap: break-word;">';
 
     // Render metadata header
-    if (metadata.title) {
-        html += `<h2 style="margin: 0 0 8px 0; color: #1e293b; font-size: 1.3em; line-height: 1.3;">${escapeHtml(metadata.title)}</h2>`;
-    }
-    
-    if (metadata.subtitle.length > 0) {
-        metadata.subtitle.forEach(st => {
-            html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 1em; line-height: 1.3;">${escapeHtml(st)}</p>`;
-        });
-    }
-    
-    if (metadata.artist.length > 0) {
-        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-style: italic; font-size: 0.9em;">${escapeHtml(metadata.artist.join(', '))}</p>`;
-    }
-    
-    if (metadata.composer.length > 0) {
-        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.composer.join(', '))}</p>`;
-    }
-    
-    if (metadata.lyricist.length > 0) {
-        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.lyricist.join(', '))}</p>`;
-    }
-    
-    // Key, Tempo, Capo, Time signature - responsive layout
-    let infoLine = [];
-    if (metadata.key) infoLine.push(`Key: ${escapeHtml(metadata.key)}`);
-    if (metadata.time) infoLine.push(`Time: ${escapeHtml(metadata.time)}`);
-    if (metadata.tempo) infoLine.push(`Tempo: ${escapeHtml(metadata.tempo)}`);
-    if (metadata.capo) infoLine.push(`Capo: ${escapeHtml(metadata.capo)}`);
-    if (metadata.duration) infoLine.push(`Duration: ${escapeHtml(metadata.duration)}`);
-    
-    if (infoLine.length > 0) {
-        html += `<p style="margin: 0 0 10px 0; color: #64748b; font-size: 0.85em; line-height: 1.5;">${infoLine.join(' • ')}</p>`;
-    }
-    
-    if (metadata.album) {
-        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.album)}</p>`;
-    }
-    
-    if (metadata.copyright.length > 0) {
-        html += `<p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.8em; line-height: 1.4;">${escapeHtml(metadata.copyright.join(' • '))}</p>`;
-    } else {
-        html += '<div style="height: 15px;"></div>';
-    }
+    html += renderMetadataHeader(metadata);
 
-    // Second pass: render content
+    // Process content
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
         const trimmed = line.trim();
@@ -103,7 +73,7 @@ function parseChordPro(input) {
         // Handle line continuation
         if (trimmed.endsWith('\\') && i < lines.length - 1) {
             line = trimmed.slice(0, -1) + lines[i + 1].trimStart();
-            i++; // skip next line
+            i++;
         }
 
         const directive = parseDirective(trimmed);
@@ -143,13 +113,19 @@ function parseChordPro(input) {
             // Handle chorus shorthand
             if (directive.type === 'chorus') {
                 html += '<div style="margin-left: 8px; border-left: 3px solid #f97316; padding-left: 8px; font-style: italic; color: #64748b;">';
-                html += '<p style="margin: 5px 0; font-size: 0.9em;">[Repetir Refrão]</p>';
+                html += '<p style="margin: 5px 0; font-size: 0.9em;">[Repeat Chorus]</p>';
                 html += '</div>';
                 continue;
             }
             
-            // Handle column breaks and page breaks
-            if (directive.type === 'column_break' || directive.type === 'new_page') {
+            // Handle column breaks in EDITOR - just show subtle indicator
+            if (directive.type === 'column_break') {
+                html += '<div style="margin: 12px 0; padding: 8px 0; border-top: 1px dashed #cbd5e1; text-align: center; color: #94a3b8; font-size: 0.75em; font-weight: 400;">column break</div>';
+                continue;
+            }
+            
+            // Handle page breaks
+            if (directive.type === 'new_page') {
                 html += '<div style="height: 20px; border-top: 2px dashed #cbd5e1; margin: 15px 0;"></div>';
                 continue;
             }
@@ -165,11 +141,11 @@ function parseChordPro(input) {
 
         // Empty line - add spacing
         if (trimmed === '') {
-            html += '<div style="height: 12px;"></div>';
+            html += '<div style="height: 8px;"></div>';
             continue;
         }
 
-        // Handle TAB content (preserve formatting)
+        // Handle TAB content
         if (inTab) {
             html += `<div style="font-family: 'Courier New', monospace; white-space: pre-wrap; overflow-x: auto; color: ${currentStyles.textColor}; font-size: ${currentStyles.textSize};">${escapeHtml(line)}</div>`;
             continue;
@@ -192,6 +168,262 @@ function parseChordPro(input) {
     }
 
     html += '</div>';
+    return html;
+}
+
+function parseChordProWithColumns(lines, metadata) {
+    // Split content by column breaks
+    const columnGroups = [];
+    let currentGroup = [];
+    
+    for (let line of lines) {
+        const directive = parseDirective(line.trim());
+        if (directive && directive.type === 'column_break') {
+            if (currentGroup.length > 0) {
+                columnGroups.push(currentGroup);
+                currentGroup = [];
+            }
+        } else {
+            currentGroup.push(line);
+        }
+    }
+    
+    // Add remaining content
+    if (currentGroup.length > 0) {
+        columnGroups.push(currentGroup);
+    }
+
+    // If no column breaks, render normally
+    if (columnGroups.length <= 1) {
+        return parseChordProSimple(lines, metadata);
+    }
+
+    // Start main container with responsive styles
+    let html = '<div class="chordpro-song" style="font-family: \'Courier New\', monospace; line-height: 1.8; max-width: 100%; word-wrap: break-word;">';
+
+    // Add mobile-specific styles FIRST
+    html += `
+    <style>
+        .chordpro-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 15px 0;
+        }
+        
+        .chordpro-column {
+            min-width: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .chordpro-columns {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+                margin: 10px 0 !important;
+            }
+            
+            .chordpro-song {
+                font-size: 0.9em !important;
+            }
+            
+            /* Make chord positioning more reliable on mobile */
+            .chord-line {
+                overflow: visible !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chordpro-song {
+                font-size: 0.85em !important;
+            }
+        }
+    </style>
+    `;
+
+    // Render metadata header ONCE at the top
+    html += renderMetadataHeader(metadata);
+
+    // Create responsive columns - pair them up (2 columns per row on desktop, stack on mobile)
+    for (let i = 0; i < columnGroups.length; i += 2) {
+        html += '<div class="chordpro-columns">';
+        
+        // First column
+        html += '<div class="chordpro-column">';
+        html += renderContentLines(columnGroups[i], metadata);
+        html += '</div>';
+        
+        // Second column (if exists)
+        if (i + 1 < columnGroups.length) {
+            html += '<div class="chordpro-column">';
+            html += renderContentLines(columnGroups[i + 1], metadata);
+            html += '</div>';
+        } else {
+            // Empty column to maintain layout on desktop only
+            html += '<div class="chordpro-column" style="display: none;"></div>';
+        }
+        
+        html += '</div>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function renderContentLines(lines, metadata) {
+    let html = '';
+    let inSection = null;
+    let sectionLabel = null;
+    let inTab = false;
+    let inGrid = false;
+    let currentStyles = {
+        chordColor: '#f97316',
+        chordSize: '0.85em',
+        textColor: '#1e293b',
+        textSize: '0.95em'
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        const trimmed = line.trim();
+        
+        // Skip comments
+        if (trimmed.startsWith('#')) continue;
+        
+        // Handle line continuation
+        if (trimmed.endsWith('\\') && i < lines.length - 1) {
+            line = trimmed.slice(0, -1) + lines[i + 1].trimStart();
+            i++;
+        }
+
+        const directive = parseDirective(trimmed);
+        
+        if (directive) {
+            // Handle section directives
+            if (directive.type === 'section_start') {
+                inSection = directive.section;
+                sectionLabel = directive.label;
+                html += getSectionStartHTML(directive.section, directive.label);
+                if (directive.section === 'tab') inTab = true;
+                if (directive.section === 'grid') inGrid = true;
+                continue;
+            }
+            
+            if (directive.type === 'section_end') {
+                html += getSectionEndHTML(inSection);
+                if (inSection === 'tab') inTab = false;
+                if (inSection === 'grid') inGrid = false;
+                inSection = null;
+                sectionLabel = null;
+                continue;
+            }
+            
+            // Handle style directives
+            if (directive.type === 'style') {
+                applyStyle(currentStyles, directive);
+                continue;
+            }
+            
+            // Handle comment directives
+            if (directive.type === 'comment') {
+                html += getCommentHTML(directive.text, directive.variant);
+                continue;
+            }
+            
+            // Handle chorus shorthand
+            if (directive.type === 'chorus') {
+                html += '<div style="margin-left: 8px; border-left: 3px solid #f97316; padding-left: 8px; font-style: italic; color: #64748b;">';
+                html += '<p style="margin: 5px 0; font-size: 0.9em;">[Repeat Chorus]</p>';
+                html += '</div>';
+                continue;
+            }
+            
+            // Skip meta directives
+            if (directive.type === 'meta') continue;
+            
+            // Skip other control directives
+            if (['define', 'chord', 'new_song', 'columns', 'pagetype', 'titles', 'column_break', 'new_page'].includes(directive.type)) {
+                continue;
+            }
+        }
+
+        // Empty line - add spacing
+        if (trimmed === '') {
+            html += '<div style="height: 8px;"></div>';
+            continue;
+        }
+
+        // Handle TAB content
+        if (inTab) {
+            html += `<div style="font-family: 'Courier New', monospace; white-space: pre-wrap; overflow-x: auto; color: ${currentStyles.textColor}; font-size: ${currentStyles.textSize};">${escapeHtml(line)}</div>`;
+            continue;
+        }
+        
+        // Handle grid content
+        if (inGrid) {
+            html += parseGridLine(line);
+            continue;
+        }
+
+        // Parse regular lines with chords
+        const chordLine = parseLineWithChords(line, currentStyles);
+        html += chordLine;
+    }
+    
+    // Close any open sections
+    if (inSection) {
+        html += getSectionEndHTML(inSection);
+    }
+
+    return html;
+}
+
+function renderMetadataHeader(metadata) {
+    let html = '';
+    
+    if (metadata.title) {
+        html += `<h2 style="margin: 0 0 8px 0; color: #1e293b; font-size: 1.3em; line-height: 1.3;">${escapeHtml(metadata.title)}</h2>`;
+    }
+    
+    if (metadata.subtitle.length > 0) {
+        metadata.subtitle.forEach(st => {
+            html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 1em; line-height: 1.3;">${escapeHtml(st)}</p>`;
+        });
+    }
+    
+    if (metadata.artist.length > 0) {
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-style: italic; font-size: 0.9em;">${escapeHtml(metadata.artist.join(', '))}</p>`;
+    }
+    
+    if (metadata.composer.length > 0) {
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.composer.join(', '))}</p>`;
+    }
+    
+    if (metadata.lyricist.length > 0) {
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.lyricist.join(', '))}</p>`;
+    }
+    
+    // Key, Tempo, Capo, Time signature
+    let infoLine = [];
+    if (metadata.key) infoLine.push(`Key: ${escapeHtml(metadata.key)}`);
+    if (metadata.time) infoLine.push(`Time: ${escapeHtml(metadata.time)}`);
+    if (metadata.tempo) infoLine.push(`Tempo: ${escapeHtml(metadata.tempo)}`);
+    if (metadata.capo) infoLine.push(`Capo: ${escapeHtml(metadata.capo)}`);
+    if (metadata.duration) infoLine.push(`Duration: ${escapeHtml(metadata.duration)}`);
+    
+    if (infoLine.length > 0) {
+        html += `<p style="margin: 0 0 10px 0; color: #64748b; font-size: 0.85em; line-height: 1.5;">${infoLine.join(' • ')}</p>`;
+    }
+    
+    if (metadata.album) {
+        html += `<p style="margin: 0 0 5px 0; color: #64748b; font-size: 0.85em;">${escapeHtml(metadata.album)}</p>`;
+    }
+    
+    if (metadata.copyright.length > 0) {
+        html += `<p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.8em; line-height: 1.4;">${escapeHtml(metadata.copyright.join(' • '))}</p>`;
+    } else {
+        html += '<div style="height: 15px;"></div>';
+    }
+
     return html;
 }
 
@@ -225,6 +457,8 @@ function parseDirective(line) {
         'eov': 'end_of_verse',
         'sob': 'start_of_bridge',
         'eob': 'end_of_bridge',
+        'soi': 'start_of_intro',
+        'eoi': 'end_of_intro',
         'sop': 'start_of_part',
         'eop': 'end_of_part',
         'sot': 'start_of_tab',
@@ -292,7 +526,6 @@ function updateMetadata(metadata, directive) {
     const value = directive.value;
     
     if (name === 'meta') {
-        // Handle generic meta directive
         const metaMatch = value.match(/^(\w+)\s+(.+)$/);
         if (metaMatch) {
             const [, metaName, metaValue] = metaMatch;
@@ -312,27 +545,27 @@ function updateMetadata(metadata, directive) {
 function getSectionStartHTML(section, label) {
     const sectionStyles = {
         chorus: 'margin-left: 8px; border-left: 3px solid #f97316; padding-left: 8px;',
-        verse: 'margin: 12px 0;',
-        bridge: 'margin: 12px 0; border-left: 3px solid #f59e0b; padding-left: 12px;',
-        part: 'margin: 12px 0; border-left: 3px solid #8b5cf6; padding-left: 12px;',
-        tab: 'background: #f8fafc; padding: 8px; border-radius: 4px; margin: 10px 0;',
-        grid: 'background: #f8fafc; padding: 8px; border-radius: 4px; margin: 10px 0; font-family: monospace;'
+        verse: 'margin: 8px 0;',
+        bridge: 'margin: 8px 0; border-left: 3px solid #f59e0b; padding-left: 12px;',
+        intro: 'margin: 8px 0; border-left: 3px solid #3b82f6; padding-left: 12px;',
+        part: 'margin: 8px 0; border-left: 3px solid #8b5cf6; padding-left: 12px;',
+        tab: 'background: #f8fafc; padding: 8px; border-radius: 4px; margin: 8px 0;',
+        grid: 'background: #f8fafc; padding: 8px; border-radius: 4px; margin: 8px 0; font-family: monospace;'
     };
     
-    // Default section names
     const defaultNames = {
-        chorus: 'Refrão',
-        verse: 'Verso',
-        bridge: 'Ponte',
-        part: 'Parte',
-        tab: 'Tablatura',
-        grid: 'Grade'
+        chorus: 'Chorus',
+        verse: 'Verse',
+        bridge: 'Bridge',
+        intro: 'Intro',
+        part: 'Part',
+        tab: 'Tab',
+        grid: 'Grid'
     };
     
-    const style = sectionStyles[section] || 'margin: 12px 0;';
+    const style = sectionStyles[section] || 'margin: 8px 0;';
     let html = `<div style="${style}">`;
     
-    // Always show label: use custom label if provided, otherwise use default name
     const displayLabel = label || defaultNames[section] || (section.charAt(0).toUpperCase() + section.slice(1));
     html += `<p style="font-weight: bold; color: #475569; margin: 0 0 5px 0; font-size: 0.9em;">${escapeHtml(displayLabel)}</p>`;
     
@@ -345,10 +578,10 @@ function getSectionEndHTML(section) {
 
 function getCommentHTML(text, variant) {
     const styles = {
-        comment: 'color: #64748b; font-style: italic; margin: 8px 0; font-weight: 500; font-size: 0.9em;',
-        comment_italic: 'color: #64748b; font-style: italic; margin: 8px 0; font-size: 0.9em;',
-        comment_box: 'color: #1e293b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 4px; margin: 8px 0; font-size: 0.9em;',
-        guitar_comment: 'color: #059669; font-style: italic; margin: 8px 0; font-size: 0.85em;'
+        comment: 'color: #64748b; font-style: italic; margin: 6px 0; font-weight: 500; font-size: 0.9em;',
+        comment_italic: 'color: #64748b; font-style: italic; margin: 6px 0; font-size: 0.9em;',
+        comment_box: 'color: #1e293b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 0.9em;',
+        guitar_comment: 'color: #059669; font-style: italic; margin: 6px 0; font-size: 0.85em;'
     };
     
     const style = styles[variant] || styles.comment;
@@ -359,7 +592,6 @@ function applyStyle(currentStyles, directive) {
     const name = directive.name;
     const value = directive.value;
     
-    // Reset to default if empty
     if (!value) {
         if (name.includes('chord')) {
             currentStyles.chordColor = '#f97316';
@@ -387,7 +619,6 @@ function parseLineWithChords(line, styles) {
     let match;
     const chords = [];
     
-    // Find all chords and their positions
     while ((match = chordRegex.exec(line)) !== null) {
         chords.push({ 
             chord: match[1], 
@@ -396,32 +627,32 @@ function parseLineWithChords(line, styles) {
     }
 
     if (chords.length === 0) {
-        // No chords, just return the line
         return `<p style="margin: 4px 0; color: ${styles.textColor}; font-size: ${styles.textSize};">${escapeHtml(line)}</p>`;
     }
 
-    // Build HTML with chords above lyrics
-    let html = '<div style="position: relative; margin: 8px 0;">';
+    // Use relative positioning with ch units for better mobile compatibility
+    let html = '<div class="chord-line" style="position: relative; margin: 6px 0; overflow: visible;">';
     
-    // Chord line
-    html += `<div style="position: relative; min-height: 18px; color: ${styles.chordColor}; font-weight: bold; font-size: ${styles.chordSize};">`;
+    // Chord layer
+    html += `<div style="position: relative; min-height: 18px; color: ${styles.chordColor}; font-weight: bold; font-size: ${styles.chordSize}; white-space: nowrap; overflow: visible;">`;
+    
     for (let {chord, offset} of chords) {
-        const position = offset * 0.6; // approximate character width
-        html += `<span style="position: absolute; left: ${position}em; white-space: nowrap;">${escapeHtml(chord)}</span>`;
+        // Use ch units for character-based positioning (more reliable across devices)
+        const position = offset * 1.0; // 1ch per character
+        html += `<span style="position: absolute; left: ${position}ch; white-space: nowrap;">${escapeHtml(chord)}</span>`;
     }
     html += '</div>';
 
-    // Lyrics line
+    // Lyrics layer
     const cleanLyrics = line.replace(/\[([^\]]+)\]/g, '');
-    html += `<div style="color: ${styles.textColor}; font-size: ${styles.textSize};">${escapeHtml(cleanLyrics)}</div>`;
+    html += `<div style="color: ${styles.textColor}; font-size: ${styles.textSize}; white-space: pre-wrap;">${escapeHtml(cleanLyrics)}</div>`;
     html += '</div>';
 
     return html;
 }
 
 function parseGridLine(line) {
-    // Simple grid parser - treats | as bar lines and chords as cells
-    if (!line.trim()) return '<div style="height: 8px;"></div>';
+    if (!line.trim()) return '<div style="height: 6px;"></div>';
     
     const cleaned = line.replace(/\|\|/g, '<span style="font-weight: bold;">||</span>')
                        .replace(/\|/g, '<span style="color: #64748b;">|</span>');
@@ -437,18 +668,4 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
-}
-
-// Replace the updatePreview function in editor.js with this:
-function updatePreview() {
-    const input = document.getElementById('chordproInput').value;
-    const preview = document.getElementById('preview');
-    
-    try {
-        const html = parseChordPro(input);
-        preview.innerHTML = html;
-    } catch (error) {
-        console.error('Parse error:', error);
-        preview.innerHTML = `<p style="color: #dc2626;">Erro ao processar ChordPro: ${error.message}</p>`;
-    }
 }

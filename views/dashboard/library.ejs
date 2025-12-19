@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A minha biblioteca - ChordPro</title>
+    <link rel="stylesheet" href="/css/library.css">
+</head>
+<body style="margin: 0; background: #fafaf9;">
+    <%- include('../partials/navbar') %>
+    
+    <div class="main-content">
+        <div class="library-container">
+            <div class="library-header">
+                <h1>A minha biblioteca</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Carregar ficheiro
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/editor'">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nova música
+                    </button>
+                </div>
+            </div>
+
+            <input 
+                type="file" 
+                id="fileInput" 
+                class="upload-input" 
+                accept=".chopro,.chordpro,.cho,.crd,.pro"
+                onchange="uploadFile()"
+            >
+
+            <div id="message" class="message hidden"></div>
+
+            <div id="songsContainer">
+                <div style="text-align: center; padding: 40px;">
+                    <p style="color: #94a3b8;">A carregar...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/library.js"></script>
+</body>
+</html>

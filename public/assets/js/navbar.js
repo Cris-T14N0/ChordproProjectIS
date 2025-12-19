@@ -97,53 +97,52 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Fetch and set user info
-    async function loadUserInfo() {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-            console.log('No token found');
-            return;
-        }
-
-        try {
-            const response = await fetch('http://localhost:3000/api/auth/me', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const user = await response.json();
-                
-                // Set username
-                document.getElementById('userName').textContent = user.username;
-                
-                // Set avatar (first letter of username)
-                const firstLetter = user.username.charAt(0).toUpperCase();
-                document.getElementById('userAvatar').textContent = firstLetter;
-                
-            } else {
-                console.error('Failed to fetch user info');
-                // Token might be invalid, redirect to login
-                if (response.status === 401) {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
-                }
+async function loadUserInfo() {
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/me', {
+            method: 'GET',
+            credentials: 'include', // THIS IS KEY - sends the cookie!
+            headers: {
+                'Content-Type': 'application/json'
             }
-        } catch (error) {
-            console.error('Error fetching user info:', error);
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            
+            // Set username
+            document.getElementById('userName').textContent = user.username;
+            
+            // Set avatar (first letter of username)
+            const firstLetter = user.username.charAt(0).toUpperCase();
+            document.getElementById('userAvatar').textContent = firstLetter;
+            
+        } else {
+            console.error('Failed to fetch user info');
+            // Token might be invalid, redirect to login
+            if (response.status === 401) {
+                window.location.href = '/login';
+            }
         }
+    } catch (error) {
+        console.error('Error fetching user info:', error);
     }
+}
 
     // Load user info on page load
     loadUserInfo();
 
 });
 
-// Logout function (global scope)
-function logout() {
-    localStorage.removeItem('token');
+async function logout() {
+  try {
+    await fetch('/auth/logout', {
+      method: 'POST',
+      credentials: 'include' // IMPORTANT: sends the cookie
+    });
+
     window.location.href = '/login';
+  } catch (err) {
+    console.error('Erro ao fazer logout:', err);
+  }
 }

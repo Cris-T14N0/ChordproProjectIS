@@ -1,0 +1,361 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #fafaf9;
+    color: #1e293b;
+    -webkit-text-size-adjust: 100%;
+    margin: 0;
+}
+
+.main-content {
+    padding: 80px 24px 24px 24px;
+}
+
+.viewer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.viewer-header {
+    background: white;
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.header-title h1 {
+    font-size: 1.6rem;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.header-subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ⭐ Estilo da tag do dono (sempre visível) */
+.owner-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-top: 12px;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+}
+
+.owner-tag svg {
+    flex-shrink: 0;
+}
+
+.owner-tag strong {
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 11px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.btn svg {
+    flex-shrink: 0;
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.btn-primary {
+    background: #f97316;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #ea580c;
+}
+
+.viewer-content {
+    background: white;
+    padding: 32px 40px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    min-height: 400px;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.song-display {
+    font-family: 'Courier New', monospace;
+    line-height: 1.8;
+    max-width: 100%;
+}
+
+.controls-bar {
+    background: white;
+    padding: 20px 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.control-group label {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.control-group .control-buttons {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.control-group button {
+    padding: 9px 14px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.control-group button:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.control-group button:active {
+    transform: scale(0.95);
+}
+
+@media print {
+    .main-content {
+        padding: 0;
+    }
+
+    .viewer-header,
+    .controls-bar {
+        display: none;
+    }
+
+    .viewer-content {
+        box-shadow: none;
+        padding: 0;
+    }
+
+    body {
+        background: white;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 70px 16px 16px 16px;
+    }
+
+    .viewer-header {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .header-title h1 {
+        font-size: 1.3rem;
+    }
+
+    .header-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .owner-tag {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        margin-top: 10px;
+    }
+
+    .header-actions {
+        margin-top: 12px;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        gap: 6px;
+    }
+
+    .controls-bar {
+        padding: 14px;
+        gap: 12px;
+        border-radius: 10px;
+    }
+
+    .control-group {
+        min-width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .control-group label {
+        min-width: 60px;
+    }
+
+    .viewer-content {
+        padding: 16px;
+        border-radius: 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .main-content {
+        padding: 65px 12px 12px 12px;
+    }
+
+    .viewer-header {
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .header-title h1 {
+        font-size: 1.2rem;
+    }
+
+    .header-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .owner-tag {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        gap: 4px;
+        margin-top: 8px;
+    }
+
+    .owner-tag svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .header-actions {
+        margin-top: 10px;
+    }
+
+    .btn {
+        padding: 9px 12px;
+        font-size: 0.85rem;
+        gap: 5px;
+    }
+
+    /* Hide button text on mobile, show icons only */
+    .btn span.btn-text {
+        display: none;
+    }
+
+    /* Make print button full width on mobile */
+    .btn-full-width {
+        flex: 1 1 100%;
+    }
+
+    .btn-full-width span.btn-text {
+        display: inline;
+    }
+
+    .controls-bar {
+        padding: 10px;
+        gap: 10px;
+        border-radius: 8px;
+    }
+
+    .control-group {
+        min-width: 100%;
+    }
+
+    .control-group label {
+        font-size: 0.85rem;
+        min-width: 55px;
+    }
+
+    .control-group button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .viewer-content {
+        padding: 12px;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 380px) {
+    .btn {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .control-group button {
+        padding: 7px 10px;
+        font-size: 0.8rem;
+    }
+
+    .owner-tag {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+}

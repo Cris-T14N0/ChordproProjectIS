@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setlists - ChordPro</title>
+  <link rel="stylesheet" href="/css/setlists.css">
+</head>
+<body style="margin: 0; background: #fafaf9;">
+  <%- include('../partials/navbar') %>
+  
+  <div class="main-content">
+    <div class="library-container">
+      
+      <!-- Setlists List View -->
+      <div id="setlists-view">
+        <div class="library-header">
+          <h1>As minhas setlists</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="openCreateModal()">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Nova setlist
+            </button>
+          </div>
+        </div>
+
+        <div id="setlists-container" class="setlists-grid">
+          <div style="text-align: center; padding: 40px; grid-column: 1/-1;">
+            <p style="color: #94a3b8;">A carregar...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setlist Detail View -->
+      <div id="setlist-detail-view" style="display: none;">
+        <!-- Setlist details will be loaded here -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Create Setlist Modal -->
+  <div id="create-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Nova setlist</h2>
+        <button class="close-btn" onclick="closeCreateModal()">&times;</button>
+      </div>
+      <form id="create-form">
+        <div class="form-group">
+          <label>Nome da setlist</label>
+          <input type="text" id="setlist-name" required placeholder="Ex: Show de Natal 2024">
+        </div>
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="setlist-public">
+            <label for="setlist-public">Tornar pública</label>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Criar setlist</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/setlists.js"></script>
+</body>
+</html>

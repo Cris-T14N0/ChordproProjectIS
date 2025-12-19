@@ -7,7 +7,7 @@ let currentTranspose = 0;
 let currentFontSize = 1;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Pega o ID da URL (mesma lógica do editor)
+    // Pega o ID da URL
     const pathParts = window.location.pathname.split('/');
     if (pathParts[1] === 'viewer' && pathParts[2]) {
         currentSongId = parseInt(pathParts[2]);
@@ -16,18 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function loadSong(songId) {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-
     try {
         const response = await fetch(`${API_URL}/api/songs/${songId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'include' // Send cookies
         });
 
         if (response.ok) {
@@ -38,10 +29,28 @@ async function loadSong(songId) {
             document.getElementById('songArtist').textContent = song.artist || '';
             document.title = `${song.title} - ChordPro`;
             
-            // Mostra o botão de editar
+            // ⭐ SEMPRE mostra a tag do dono
+            const ownerTagContainer = document.getElementById('ownerTagContainer');
+            ownerTagContainer.innerHTML = `
+                <div class="owner-tag">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Cifra de: <strong>${song.owner_username}</strong>
+                </div>
+            `;
+            
+            // Controla apenas a visibilidade do botão editar
             const editBtn = document.getElementById('editBtn');
-            editBtn.href = `/editor/${songId}`;
-            editBtn.style.display = 'inline-flex';
+            
+            if (song.is_owner) {
+                // É o dono - mostra botão de editar
+                editBtn.href = `/editor/${songId}`;
+                editBtn.style.display = 'inline-flex';
+            } else {
+                // Não é o dono - esconde botão
+                editBtn.style.display = 'none';
+            }
             
             // Guarda o conteúdo e renderiza
             songContent = song.content || '';
@@ -49,10 +58,11 @@ async function loadSong(songId) {
             
         } else {
             if (response.status === 401) {
-                localStorage.removeItem('token');
                 window.location.href = '/login';
             } else if (response.status === 404) {
                 showError('Música não encontrada');
+            } else if (response.status === 403) {
+                showError('Sem permissão para visualizar esta música');
             } else {
                 showError('Erro ao carregar música');
             }
@@ -73,8 +83,8 @@ function renderSong() {
             content = transposeContent(content, currentTranspose);
         }
         
-        // Usa o parser ChordPro (mesma função do editor)
-        const html = parseChordPro(content);
+        // Usa o parser ChordPro COM isViewer = true para criar colunas reais
+        const html = parseChordPro(content, true);
         display.innerHTML = html;
         
         // Aplica tamanho de fonte se foi alterado

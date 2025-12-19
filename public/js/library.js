@@ -5,19 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function loadSongs() {
-    const token = localStorage.getItem('token');
     const container = document.getElementById('songsContainer');
-    
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
 
     try {
         const response = await fetch(`${API_URL}/api/songs`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'include' // Send cookies
         });
 
         if (response.ok) {
@@ -41,7 +33,6 @@ async function loadSongs() {
             }
         } else {
             if (response.status === 401) {
-                localStorage.removeItem('token');
                 window.location.href = '/login';
             }
         }
@@ -98,16 +89,13 @@ async function uploadFile() {
     
     if (!file) return;
     
-    const token = localStorage.getItem('token');
     const formData = new FormData();
     formData.append('file', file);
     
     try {
         const response = await fetch(`${API_URL}/api/songs/upload`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
+            credentials: 'include', // Send cookies
             body: formData
         });
         
@@ -140,14 +128,10 @@ async function deleteSong(songId) {
         return;
     }
     
-    const token = localStorage.getItem('token');
-    
     try {
         const response = await fetch(`${API_URL}/api/songs/${songId}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'include' // Send cookies
         });
         
         const data = await response.json();

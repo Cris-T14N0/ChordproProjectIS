@@ -33,18 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function loadSong(songId) {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-
     try {
         const response = await fetch(`${API_URL}/api/songs/${songId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'include'
         });
 
         if (response.ok) {
@@ -54,16 +45,14 @@ async function loadSong(songId) {
             document.getElementById('title').value = song.title;
             document.getElementById('artist').value = song.artist || '';
             document.getElementById('chordproInput').value = song.content || '';
+            document.getElementById('isPublic').checked = song.is_public === 1;
             
             updatePreview();
+        } else if (response.status === 404) {
+            showMessage('Música não encontrada', 'error');
+            setTimeout(() => window.location.href = '/library', 2000);
         } else {
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            } else if (response.status === 404) {
-                showMessage('Música não encontrada', 'error');
-                setTimeout(() => window.location.href = '/library', 2000);
-            }
+            showMessage('Erro ao carregar música', 'error');
         }
     } catch (error) {
         console.error('Erro ao carregar música:', error);
@@ -76,7 +65,7 @@ function updatePreview() {
     const preview = document.getElementById('preview');
     
     try {
-        const html = parseChordPro(input);
+        const html = parseChordPro(input, false); // FALSE for editor (shows dotted line)
         preview.innerHTML = html;
     } catch (error) {
         console.error('Parse error:', error);
@@ -88,8 +77,8 @@ async function saveSong() {
     const title = document.getElementById('title').value.trim();
     const artist = document.getElementById('artist').value.trim();
     const content = document.getElementById('chordproInput').value.trim();
+    const is_public = document.getElementById('isPublic').checked;
     const saveBtn = document.getElementById('saveBtn');
-    const token = localStorage.getItem('token');
 
     if (!title) {
         showMessage('Por favor, insira um título', 'error');
@@ -114,10 +103,10 @@ async function saveSong() {
         const response = await fetch(url, {
             method: method,
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ title, artist, content })
+            credentials: 'include',
+            body: JSON.stringify({ title, artist, content, is_public })
         });
 
         const data = await response.json();

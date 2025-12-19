@@ -1,0 +1,16 @@
+{title: Test Song}
+{artist: Test Artist}
+
+[C]First line in column 1
+[G]Second line in column 1
+[Am]Third line in column 1
+
+{column_break}
+
+[F]First line in column 2
+[C]Second line in column 2
+[G]Third line in column 2
+
+[F]First line in column 3
+[C]Second line in column 3
+[G]Third line in column 3
