@@ -85,7 +85,8 @@ app.get("/viewer/:id", authMiddleware, (req, res) =>
 try {
   app.use("/api/auth", require("./routes/auth.routes"));
   console.log("Auth routes loaded successfully");
-} catch (error) {
+} catch (error)
+{
   console.error("Error loading auth routes:", error);
 }
 
