@@ -1,17 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ChordPro</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - ChordPro</title>
+  <link rel="stylesheet" href="/css/navbar.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
 </head>
-<body style="margin: 0; background: #fafaf9;">
-    <%- include('../partials/navbar') %>
-    
-    <div class="main-content">
-        <h1>Dashboard</h1>
-        <p>Bem-vindo ao ChordPro!</p>
+<body style="margin: 0; background: #f8fafc;">
+  <%- include('../partials/navbar') %>
+  
+  <div class="main-content">
+    <div class="dashboard-header">
+      <div>
+        <h1 style="font-size: 28px; color: #1e293b; margin-bottom: 8px;">Dashboard</h1>
+        <p style="color: #64748b; font-size: 15px;">Procura e encontra as tuas músicas favoritas</p>
+      </div>
     </div>
-    
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-container">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="Pesquisar por título ou artista..."
+          autocomplete="off"
+        >
+        <button id="clearSearch" class="clear-btn" style="display: none;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" style="display: none;">
+      <div class="results-header">
+        <h2 id="resultsTitle">Resultados da pesquisa</h2>
+        <span id="resultsCount" class="results-count">0 músicas encontradas</span>
+      </div>
+      <div id="searchResults" class="songs-grid"></div>
+    </div>
+
+    <!-- Welcome Section (shown when no search) -->
+    <div id="welcomeSection" class="welcome-section">
+      <div class="welcome-card">
+        <svg class="welcome-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+        </svg>
+        <h3>Bem-vindo ao YourChordPro!</h3>
+        <p>Começa a pesquisar músicas para as visualizar e tocar</p>
+        <div class="quick-links">
+          <a href="/library" class="quick-link">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+            </svg>
+            A minha biblioteca
+          </a>
+          <a href="/setlists" class="quick-link">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            </svg>
+            As minhas setlists
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>

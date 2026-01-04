@@ -85,7 +85,8 @@ app.get("/viewer/:id", authMiddleware, (req, res) =>
 try {
   app.use("/api/auth", require("./routes/auth.routes"));
   console.log("Auth routes loaded successfully");
-} catch (error)
+}
+catch (error)
 {
   console.error("Error loading auth routes:", error);
 }
@@ -93,27 +94,30 @@ try {
 try {
   app.use("/api/songs", require("./routes/songs.routes"));
   console.log("Songs routes loaded successfully");
-} catch (error) {
+}
+catch (error) {
   console.error("Error loading songs routes:", error);
 }
 
 try {
   app.use("/api/setlists", require("./routes/setlists.routes"));
   console.log("Setlists routes loaded successfully");
-} catch (error) {
+}
+catch (error){
   console.error("Error loading setlists routes:", error);
 }
 
 try {
   app.use("/api/users", require("./routes/users.routes"));
   console.log("Users routes loaded successfully");
-} catch (error) {
+}
+catch (error) {
   console.error("Error loading users routes:", error);
 }
 
-// ============================
-// ===== 404 =================
-// ============================
+// ======================
+// ===== 404 ============
+// ======================
 app.use((req, res) => {
   res.status(404).render("404");
 });
