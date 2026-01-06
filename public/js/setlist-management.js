@@ -1,450 +1,530 @@
-// ============================
-// Gestão de Setlists - Lado do Cliente
-// ============================
 
-// Estado da aplicação
-const state = {
-    setlist: null,
-    tracksInSetlist: [],
-    userLibrary: [],
-    draggedItem: null
-};
+// ===============================================
+// VARIAVEIS GLOBAIS
+// ===============================================
+let currentSetlistId = null;
+let currentSetlistSongs = [];
+let allAvailableSongs = [];
 
-// Pega o ID da setlist que está no URL
-const setlistId = new URLSearchParams(window.location.search).get('id');
-
-// ============================
-// Inicialização
-// ============================
-
+// ===============================================
+// INICIALIZAÇÃO
+// ===============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Página carregada, setlist ID:', setlistId);
+    // Pegar ID da setlist do URL
+    const urlParams = new URLSearchParams(window.location.search);
+    currentSetlistId = urlParams.get('id');
 
-    // Se não tiver ID, volta para a lista de setlists
-    if (!setlistId) {
-        showToast('ID da setlist não encontrado');
+    // Verifica se tem ID
+    if (!currentSetlistId) {
+        showToast('Setlist não encontrada', 'error');
         setTimeout(() => window.location.href = '/setlists', 2000);
         return;
     }
 
-    // Carrega tudo em paralelo para ser mais rápido
+    // Carregar dados
     await Promise.all([
-        loadSetlistData(),
-        loadUserLibrary()
+        loadSetlist(),
+        loadAllSongs()
     ]);
 
+    // Configurar eventos
     setupEventListeners();
 });
 
-// ============================
-// Event Listeners
-// ============================
-
+// ===============================================
+// EVENT LISTENERS
+// ===============================================
 function setupEventListeners() {
-    // Botão de adicionar música
+    // Botão adicionar música
     const addBtn = document.getElementById('add-song-btn');
-    addBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal();
-    });
+    if (addBtn) {
+        addBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openModal();
+        });
+    }
 
-    // Fechar modal - botão X
+    // Botão fechar modal
     const closeBtn = document.getElementById('close-modal-btn');
-    closeBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        closeModal();
-    });
+    if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal();
+        });
+    }
 
-    // Fechar modal - clique fora
+    // Fechar modal ao clicar fora
     const overlay = document.getElementById('modal-overlay');
-    overlay?.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
-    });
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
+    }
 
-    // Pesquisa no modal
+    // Campo de pesquisa no modal
     const searchInput = document.getElementById('modal-search');
-    searchInput?.addEventListener('input', (e) => {
-        filterSongs(e.target.value.toLowerCase());
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterSongs(e.target.value);
+        });
+    }
+
+    // Tecla ESC para fechar modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
     });
 }
 
-// ============================
-// Carregar Dados do Servidor
-// ============================
+// ===============================================
+// FUNÇÕES DO MODAL
+// ===============================================
+function openModal() {
+    const modal = document.getElementById('modal-overlay');
+    const modalDialog = document.getElementById('modal-dialog');
+    const searchInput = document.getElementById('modal-search');
 
-async function loadSetlistData() {
+    if (!modal) return;
+
+    // Limpar pesquisa
+    if (searchInput) {
+        searchInput.value = '';
+    }
+
+    // Mostrar todas as músicas
+    displayAvailableSongs(allAvailableSongs);
+
+    // Mostrar modal com animação
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalDialog.classList.remove('scale-95');
+    }, 10);
+
+    // Focar no campo de pesquisa
+    setTimeout(() => {
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }, 100);
+}
+
+function closeModal() {
+    const modal = document.getElementById('modal-overlay');
+    const modalDialog = document.getElementById('modal-dialog');
+
+    if (!modal) return;
+
+    // Animação de saída
+    modal.classList.add('opacity-0');
+    modalDialog.classList.add('scale-95');
+
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+// ===============================================
+// CARREGAR SETLIST
+// ===============================================
+async function loadSetlist() {
     try {
-        const response = await fetch(`/api/setlists/${setlistId}`, {
-            credentials: 'include'
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/setlists/${currentSetlistId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
 
         if (!response.ok) {
             throw new Error('Erro ao carregar setlist');
         }
 
-        const data = await response.json();
-        state.setlist = data;
-        state.tracksInSetlist = data.songs || [];
+        const setlist = await response.json();
+        currentSetlistSongs = setlist.songs || [];
 
-        // Atualiza a interface
-        updateHeader();
-        renderTracks();
+        // Atualizar interface
+        updateSetlistHeader(setlist);
+        displaySongs(currentSetlistSongs);
 
     } catch (error) {
         console.error('Erro ao carregar setlist:', error);
-        showToast('Erro ao carregar a setlist. Tenta novamente.');
+        showToast('Erro ao carregar setlist', 'error');
     }
 }
 
-async function loadUserLibrary() {
-    try {
-        const response = await fetch('/api/songs', {
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            throw new Error('Erro ao carregar biblioteca');
-        }
-
-        state.userLibrary = await response.json();
-        console.log(`Biblioteca carregada: ${state.userLibrary.length} músicas`);
-
-    } catch (error) {
-        console.error('Erro ao carregar biblioteca:', error);
-        showToast('Não conseguimos carregar a tua biblioteca.');
-    }
-}
-
-// ============================
-// Atualizar Interface
-// ============================
-
-function updateHeader() {
-    const { name, is_public, created_at } = state.setlist;
-    const count = state.tracksInSetlist.length;
-
+// ===============================================
+// ATUALIZAR CABEÇALHO
+// ===============================================
+function updateSetlistHeader(setlist) {
     // Título
     const titleEl = document.getElementById('setlist-title');
-    if (titleEl) titleEl.textContent = name;
+    if (titleEl) {
+        titleEl.textContent = setlist.name || 'Setlist';
+    }
 
     // Badge de visibilidade
-    const badgeEl = document.getElementById('visibility-badge');
-    if (badgeEl) {
-        badgeEl.textContent = is_public ? '🌐 Pública' : '🔒 Privada';
+    const badge = document.getElementById('visibility-badge');
+    if (badge) {
+        badge.textContent = setlist.is_public ? 'Pública' : 'Privada';
+        badge.className = setlist.is_public
+            ? 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800'
+            : 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800';
     }
 
     // Estatísticas
-    const statsEl = document.getElementById('statistics');
-    if (statsEl) {
-        const date = new Date(created_at).toLocaleDateString('pt-PT');
-        statsEl.innerHTML = `
-      <span>${count} ${count === 1 ? 'música' : 'músicas'}</span>
-      <span>•</span>
-      <span>Criada a ${date}</span>
-    `;
+    const stats = document.getElementById('statistics');
+    if (stats) {
+        stats.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600">Total de músicas:</span>
+                        <span class="font-semibold text-gray-900">${currentSetlistSongs.length}</span>
+                    </div>
+                `;
     }
 }
 
-function renderTracks() {
+// ===============================================
+// MOSTRAR MÚSICAS
+// ===============================================
+function displaySongs(songs) {
     const container = document.getElementById('tracks-container');
+
     if (!container) return;
 
-    // Lista vazia? Mostra placeholder
-    if (state.tracksInSetlist.length === 0) {
+    // Se não tem músicas
+    if (songs.length === 0) {
         container.innerHTML = `
-      <li style="list-style: none;">
-        <div class="placeholder-content">
-          <div class="placeholder-icon">🎵</div>
-          <h3 class="placeholder-title">Lista vazia</h3>
-          <p class="placeholder-text">Adiciona músicas para começar</p>
-        </div>
-      </li>
-    `;
+                    <li>
+                        <div class="text-center py-10 text-gray-500">
+                            <p class="mb-2">Nenhuma música na setlist</p>
+                            <p class="text-sm text-gray-400">Clica em "Adicionar Música" para começar</p>
+                        </div>
+                    </li>
+                `;
         return;
     }
 
-    // Renderiza cada música
-    container.innerHTML = state.tracksInSetlist.map((track, idx) => {
-        // Tenta encontrar o ID da música de várias formas
-        // (o backend às vezes retorna nomes diferentes)
-        const songId = track.song_id || track.cifra_id || track.id;
+    // Gerar HTML para cada música
+    container.innerHTML = songs.map((song, index) => `
+                <li class="track-item bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300 rounded-xl p-4 flex items-center gap-4 transition-all duration-200 cursor-move"
+                    data-item-id="${song.item_id}" 
+                    data-position="${song.position}" 
+                    draggable="true">
+                    <div class="w-10 h-10 flex items-center justify-center bg-white rounded-lg font-semibold text-gray-700 flex-shrink-0">
+                        ${index + 1}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-gray-900 truncate">${escapeHtml(song.title)}</div>
+                        <div class="text-sm text-gray-600 truncate">${escapeHtml(song.artist)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <a href="/viewer/${song.song_id}" 
+                           class="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                           title="Ver cifra">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </a>
+                        <button onclick="removeSong(${song.item_id})"
+                                class="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+                                title="Remover">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+            `).join('');
 
-        return `
-      <li class="track-entry" 
-          draggable="true" 
-          data-entry-id="${track.item_id}" 
-          data-order="${idx}">
-        <span class="grip-icon">☰</span>
-        <div class="track-details">
-          <h3 class="track-title">${escapeHtml(track.title)}</h3>
-          <p class="track-artist">${escapeHtml(track.artist || 'Sem artista')}</p>
-        </div>
-        <div class="track-controls">
-          <button class="control-btn view-btn" 
-                  data-action="open" 
-                  data-song-id="${songId}">
-            Abrir
-          </button>
-          <button class="control-btn delete-btn" 
-                  data-action="delete" 
-                  data-item-id="${track.item_id}">
-            Eliminar
-          </button>
-        </div>
-      </li>
-    `;
-    }).join('');
-
-    // Adiciona funcionalidade aos botões
-    setupTrackButtons();
-    setupDragDrop();
+    // Configurar drag-and-drop
+    setupDragAndDrop();
 }
 
-function setupTrackButtons() {
-    // Botões de "Abrir" - vai para o viewer
-    document.querySelectorAll('[data-action="open"]').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const songId = this.getAttribute('data-song-id');
-            if (songId && songId !== 'null' && songId !== 'undefined') {
-                window.location.href = `/viewer/${songId}`;
-            } else {
-                console.error('ID da música não encontrado');
-                showToast('Não conseguimos abrir esta música');
-            }
-        });
-    });
-
-    // Botões de "Eliminar"
-    document.querySelectorAll('[data-action="delete"]').forEach(btn => {
-        btn.addEventListener('click', async function () {
-            const itemId = this.getAttribute('data-item-id');
-            if (confirm('Tens a certeza que queres remover esta música da setlist?')) {
-                await deleteTrack(itemId);
-            }
-        });
-    });
-}
-
-// ============================
-// Modal de Adicionar Músicas
-// ============================
-
-function openModal() {
-    const modal = document.getElementById('modal-overlay');
-    if (!modal) {
-        console.error('Modal não existe no HTML!');
-        return;
-    }
-
-    modal.style.display = 'flex';
-    renderModalSongs(state.userLibrary);
-
-    // Foca no campo de pesquisa
-    const searchInput = document.getElementById('modal-search');
-    if (searchInput) {
-        searchInput.value = '';
-        setTimeout(() => searchInput.focus(), 100);
-    }
-}
-
-function closeModal() {
-    const modal = document.getElementById('modal-overlay');
-    if (modal) modal.style.display = 'none';
-}
-
-function renderModalSongs(songs) {
-    const container = document.getElementById('modal-songs-list');
-    if (!container) {
-        console.error('Container de músicas não existe!');
-        return;
-    }
-
-    // Remove as que já estão na setlist
-    const existingIds = new Set(state.tracksInSetlist.map(t => t.song_id));
-    const available = songs.filter(song => !existingIds.has(song.id));
-
-    if (available.length === 0) {
-        container.innerHTML = `
-      <div class="placeholder-content">
-        <p class="placeholder-text">Todas as tuas músicas já estão nesta setlist 🎉</p>
-      </div>
-    `;
-        return;
-    }
-
-    // Renderiza lista de músicas disponíveis
-    container.innerHTML = available.map(song => `
-    <div class="selection-item" data-song-id="${song.id}">
-      <h4 class="selection-name">${escapeHtml(song.title)}</h4>
-      <p class="selection-detail">${escapeHtml(song.artist || 'Artista não definido')}</p>
-    </div>
-  `).join('');
-
-    // Adiciona clique para adicionar
-    container.querySelectorAll('.selection-item').forEach(item => {
-        item.addEventListener('click', async function () {
-            const songId = this.getAttribute('data-song-id');
-            await addSongToSetlist(songId);
-        });
-    });
-}
-
-function filterSongs(query) {
-    const filtered = state.userLibrary.filter(song =>
-        song.title.toLowerCase().includes(query) ||
-        (song.artist && song.artist.toLowerCase().includes(query))
-    );
-    renderModalSongs(filtered);
-}
-
-// ============================
-// Operações CRUD
-// ============================
-
-async function addSongToSetlist(songId) {
+// ===============================================
+// CARREGAR TODAS MÚSICAS
+// ===============================================
+async function loadAllSongs() {
     try {
-        const response = await fetch(`/api/setlists/${setlistId}/items`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ cifra_id: parseInt(songId) })
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/songs', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
 
         if (!response.ok) {
-            throw new Error('Erro ao adicionar música');
+            throw new Error('Erro ao carregar músicas');
         }
 
+        allAvailableSongs = await response.json();
+    } catch (error) {
+        console.error('Erro ao carregar músicas:', error);
+        showToast('Erro ao carregar lista de músicas', 'error');
+    }
+}
+
+// ===============================================
+// MOSTRAR MÚSICAS DISPONÍVEIS NO MODAL
+// ===============================================
+function displayAvailableSongs(songs) {
+    const container = document.getElementById('modal-songs-list');
+
+    if (!container) return;
+
+    // Se não tem músicas
+    if (songs.length === 0) {
+        container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p>Nenhuma música encontrada</p>
+                    </div>
+                `;
+        return;
+    }
+
+    // IDs das músicas já na setlist
+    const songsInSetlist = new Set(currentSetlistSongs.map(s => s.song_id));
+
+    // Gerar HTML para cada música
+    container.innerHTML = songs.map(song => {
+        const isInSetlist = songsInSetlist.has(song.id);
+
+        return `
+                    <div class="song-item ${isInSetlist ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'} 
+                                bg-gray-100 border border-gray-200 rounded-xl p-4 flex items-center justify-between transition-all duration-200"
+                         ${isInSetlist ? '' : `onclick="addSongToSetlist(${song.id})"`}>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-gray-900 truncate">${escapeHtml(song.title)}</div>
+                            <div class="text-sm text-gray-600 truncate">${escapeHtml(song.artist)}</div>
+                        </div>
+                        ${isInSetlist ?
+                '<span class="inline-flex items-center gap-1 text-sm font-medium text-green-600 flex-shrink-0 ml-4">✓ Já adicionada</span>' :
+                '<button class="w-10 h-10 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-xl transition-colors flex-shrink-0 ml-4">+</button>'
+            }
+                    </div>
+                `;
+    }).join('');
+}
+
+// ===============================================
+// FILTRAR MÚSICAS
+// ===============================================
+function filterSongs(query) {
+    const normalizedQuery = query.toLowerCase().trim();
+
+    if (!normalizedQuery) {
+        displayAvailableSongs(allAvailableSongs);
+        return;
+    }
+
+    const filtered = allAvailableSongs.filter(song =>
+        song.title.toLowerCase().includes(normalizedQuery) ||
+        song.artist.toLowerCase().includes(normalizedQuery)
+    );
+
+    displayAvailableSongs(filtered);
+}
+
+// ===============================================
+// ADICIONAR MÚSICA À SETLIST
+// ===============================================
+async function addSongToSetlist(songId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/setlists/${currentSetlistId}/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                cifra_id: songId
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Erro ao adicionar música');
+        }
+
+        showToast('✓ Música adicionada!', 'success');
         closeModal();
-        await loadSetlistData(); // Recarrega para atualizar a lista
-        showToast('Música adicionada! 🎵');
+        await loadSetlist();
 
     } catch (error) {
         console.error('Erro ao adicionar música:', error);
-        showToast('Não conseguimos adicionar a música. Tenta outra vez.');
+        showToast(error.message || 'Erro ao adicionar música', 'error');
     }
 }
 
-async function deleteTrack(itemId) {
+// ===============================================
+// REMOVER MÚSICA DA SETLIST
+// ===============================================
+async function removeSong(itemId) {
+    if (!confirm('Remover esta música da setlist?')) {
+        return;
+    }
+
     try {
-        const response = await fetch(`/api/setlists/${setlistId}/items/${itemId}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/setlists/${currentSetlistId}/items/${itemId}`, {
             method: 'DELETE',
-            credentials: 'include'
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
+
+        const data = await response.json();
 
         if (!response.ok) {
-            throw new Error('Erro ao eliminar música');
+            throw new Error(data.error || 'Erro ao remover música');
         }
 
-        await loadSetlistData(); // Recarrega a lista
-        showToast('Música removida da setlist');
+        showToast('✓ Música removida', 'success');
+        await loadSetlist();
 
     } catch (error) {
-        console.error('Erro ao eliminar música:', error);
-        showToast('Não conseguimos remover a música.');
+        console.error('Erro ao remover música:', error);
+        showToast(error.message || 'Erro ao remover música', 'error');
     }
 }
 
-// ============================
-// Drag & Drop (Reordenar)
-// ============================
+// ===============================================
+// DRAG AND DROP
+// ===============================================
+function setupDragAndDrop() {
+    const items = document.querySelectorAll('.track-item');
+    let draggedItem = null;
 
-function setupDragDrop() {
-    const entries = document.querySelectorAll('.track-entry');
-
-    entries.forEach(entry => {
-        // Começa a arrastar
-        entry.addEventListener('dragstart', function (e) {
-            state.draggedItem = this;
-            this.classList.add('is-dragging');
+    items.forEach(item => {
+        // Início do arrastar
+        item.addEventListener('dragstart', (e) => {
+            draggedItem = item;
+            item.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', item.innerHTML);
         });
 
-        // Para de arrastar
-        entry.addEventListener('dragend', function () {
-            this.classList.remove('is-dragging');
-            state.draggedItem = null;
+        // Fim do arrastar
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            draggedItem = null;
         });
 
-        // Está por cima de outro item
-        entry.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        });
-
-        // Solta o item
-        entry.addEventListener('drop', function (e) {
+        // Passar por cima de outro item
+        item.addEventListener('dragover', (e) => {
             e.preventDefault();
 
-            if (state.draggedItem && state.draggedItem !== this) {
-                const container = document.getElementById('tracks-container');
-                const allEntries = [...container.children].filter(el =>
-                    el.classList.contains('track-entry')
-                );
+            if (!draggedItem || draggedItem === item) return;
 
-                const draggedIdx = allEntries.indexOf(state.draggedItem);
-                const targetIdx = allEntries.indexOf(this);
+            const container = item.parentElement;
+            const rect = item.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
 
-                // Reordena no DOM
-                if (draggedIdx < targetIdx) {
-                    this.parentNode.insertBefore(state.draggedItem, this.nextSibling);
-                } else {
-                    this.parentNode.insertBefore(state.draggedItem, this);
-                }
-
-                // Guarda a nova ordem no servidor
-                saveNewOrder();
+            // Inserir antes ou depois dependendo da posição
+            if (e.clientY < midY) {
+                container.insertBefore(draggedItem, item);
+            } else {
+                container.insertBefore(draggedItem, item.nextSibling);
             }
         });
     });
+
+    // Soltar item
+    const container = document.getElementById('tracks-container');
+    if (container) {
+        container.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            await saveNewOrder();
+        });
+
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+    }
 }
 
+// ===============================================
+// SALVAR NOVA ORDEM
+// ===============================================
 async function saveNewOrder() {
-    const container = document.getElementById('tracks-container');
-    const entries = [...container.children].filter(el =>
-        el.classList.contains('track-entry')
-    );
+    const items = document.querySelectorAll('.track-item');
 
-    // Cria array com a nova ordem
-    const items = entries.map((entry, position) => ({
-        itemId: parseInt(entry.dataset.entryId),
-        position: position
+    // Criar array com nova ordem
+    const updates = Array.from(items).map((item, index) => ({
+        itemId: parseInt(item.dataset.itemId),
+        position: index
     }));
 
     try {
-        const response = await fetch(`/api/setlists/${setlistId}/items/reorder`, {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/setlists/${currentSetlistId}/items/reorder`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ items })
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ items: updates })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            throw new Error('Erro ao reordenar');
+            throw new Error(data.error || 'Erro ao reordenar');
         }
 
-        // Tudo certo! Não precisa mostrar mensagem
-        console.log('Ordem guardada com sucesso');
+        showToast('✓ Ordem atualizada', 'success');
+        await loadSetlist();
 
-    }
-    catch (error) {
-        console.error('Erro ao guardar ordem:', error);
-        showToast('Não conseguimos guardar a nova ordem');
-        await loadSetlistData(); // Reverte para a ordem anterior
+    } catch (error) {
+        console.error('Erro ao reordenar:', error);
+        showToast(error.message || 'Erro ao reordenar', 'error');
+        await loadSetlist(); // Recarregar para restaurar ordem original
     }
 }
 
-// ============================
-// Utilitários
-// ============================
-
-function showToast(message) {
+// ===============================================
+// TOAST NOTIFICATION
+// ===============================================
+function showToast(message, type = 'success') {
     const toast = document.getElementById('toast-message');
+
     if (!toast) return;
 
-    toast.textContent = message;
-    toast.classList.add('show');
+    // Definir cores baseadas no tipo
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const textColor = 'text-white';
 
+    toast.textContent = message;
+    toast.className = `fixed top-6 right-6 px-5 py-3 rounded-lg font-medium shadow-lg toast-notification ${bgColor} ${textColor} animate-slide-in`;
+    toast.classList.remove('hidden');
+
+    // Mostrar toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // Esconder depois de 3 segundos
     setTimeout(() => {
         toast.classList.remove('show');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 300);
     }, 3000);
+}
+
+// ===============================================
+// ESCAPE HTML (segurança)
+// ===============================================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

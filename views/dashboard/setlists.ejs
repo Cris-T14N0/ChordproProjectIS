@@ -1,69 +1,148 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Setlists - ChordPro</title>
-  <link rel="stylesheet" href="/css/setlists.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setlists - ChordPro</title>
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/setlists.css">
 </head>
+
 <body style="margin: 0; background: #fafaf9;">
-  <%- include('../partials/navbar') %>
-  
-  <div class="main-content">
-    <div class="library-container">
-      
-      <!-- Setlists List View -->
-      <div id="setlists-view">
-        <div class="library-header">
-          <h1>As minhas setlists</h1>
-          <div class="header-actions">
-            <button class="btn btn-primary" onclick="openCreateModal()">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              Nova setlist
-            </button>
-          </div>
+    <%- include('../partials/navbar') %>
+
+        <div class="main-content">
+            <div class="library-container">
+
+                <!-- Setlists List View -->
+                <div id="setlists-view">
+                    <div class="library-header">
+                        <div>
+                            <h1>As minhas setlists</h1>
+                            <p class="header-subtitle">Organiza as tuas músicas em setlists personalizadas</p>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" onclick="openCreateModal()">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Nova setlist
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="setlists-container" class="setlists-grid">
+                        <div style="text-align: center; padding: 40px; grid-column: 1/-1;">
+                            <div class="loading-spinner"></div>
+                            <p style="color: #94a3b8; margin-top: 16px;">A carregar...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <div id="setlists-container" class="setlists-grid">
-          <div style="text-align: center; padding: 40px; grid-column: 1/-1;">
-            <p style="color: #94a3b8;">A carregar...</p>
-          </div>
+        <!-- Create Setlist Modal -->
+        <div id="create-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Nova setlist</h2>
+                    <button class="modal-close" onclick="closeCreateModal()">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <form id="create-form">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="setlist-name">Nome da setlist</label>
+                            <input type="text" id="setlist-name" required placeholder="Ex: Show de Natal 2024"
+                                maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="setlist-public">
+                                <label for="setlist-public">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Tornar esta setlist pública
+                                    <span class="checkbox-hint">Outros utilizadores poderão ver esta setlist</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Criar setlist
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
 
-      <!-- Setlist Detail View -->
-      <div id="setlist-detail-view" style="display: none;">
-        <!-- Setlist details will be loaded here -->
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Create Setlist Modal -->
-  <div id="create-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Nova setlist</h2>
-        <button class="close-btn" onclick="closeCreateModal()">&times;</button>
-      </div>
-      <form id="create-form">
-        <div class="form-group">
-          <label>Nome da setlist</label>
-          <input type="text" id="setlist-name" required placeholder="Ex: Show de Natal 2024">
+        <!-- Edit Setlist Modal -->
+        <div id="edit-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Editar setlist</h2>
+                    <button class="modal-close" onclick="closeEditModal()">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <form id="edit-form">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="edit-setlist-name">Nome da setlist</label>
+                            <input type="text" id="edit-setlist-name" required placeholder="Nome da setlist"
+                                maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="edit-setlist-public">
+                                <label for="edit-setlist-public">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Tornar esta setlist pública
+                                    <span class="checkbox-hint">Outros utilizadores poderão ver esta setlist</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Guardar alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="form-group">
-          <div class="checkbox-group">
-            <input type="checkbox" id="setlist-public">
-            <label for="setlist-public">Tornar pública</label>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Criar setlist</button>
-      </form>
-    </div>
-  </div>
 
-  <script src="/js/setlists.js"></script>
+        <script src="/js/setlists.js"></script>
 </body>
+
 </html>

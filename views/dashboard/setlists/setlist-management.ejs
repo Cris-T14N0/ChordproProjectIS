@@ -1,63 +1,163 @@
 <!DOCTYPE html>
 <html lang="pt">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerir Setlist - ChordPro</title>
-    <link rel="stylesheet" href="/css/setlist-management.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ícones do Heroicons -->
+    <script src="https://unpkg.com/@heroicons/react@2.0.18/outline/index.js"></script>
+    <style>
+        /* Animações personalizadas */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        /* Estilos personalizados para drag & drop */
+        .dragging {
+            opacity: 0.5;
+            border: 2px dashed #fb923c !important;
+        }
+        
+        /* Estilos para scroll */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        
+        /* Toast notification */
+        .toast-notification {
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+    </style>
 </head>
-
-<body>
+<body class="bg-gray-50 min-h-screen">
     <%- include('../../partials/navbar') %>
 
-        <div class="main-content">
-            <a href="#" class="back-button" onclick="window.history.back(); return false;">
-                <span class="back-arrow">←</span>
+    <div class="main-content">
+        <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <!-- Botão Voltar -->
+            <button onclick="window.history.back(); return false;" 
+                    class="inline-flex items-center text-orange-500 hover:text-orange-600 font-medium mb-6 transition-colors">
+                <span class="text-xl mr-2">←</span>
                 <span>Voltar</span>
-            </a>
+            </button>
 
-            <div class="header-section">
-                <div class="title-row">
-                    <div class="title-info">
-                        <h1 id="setlist-title">A carregar...</h1>
-                        <span class="badge" id="visibility-badge"></span>
+            <!-- Header Section -->
+            <div class="mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 id="setlist-title" class="text-3xl font-bold text-gray-900">A carregar...</h1>
+                        <span id="visibility-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"></span>
                     </div>
-                    <button class="add-button" id="add-song-btn">
+                    <button id="add-song-btn" 
+                            class="inline-flex items-center justify-center px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-orange-200 hover:-translate-y-0.5">
                         + Adicionar Música
                     </button>
                 </div>
-                <div class="stats-row" id="statistics"></div>
+                
+                <div id="statistics" class="flex flex-wrap gap-6">
+                    <!-- Estatísticas serão preenchidas por JavaScript -->
+                </div>
             </div>
 
-            <div class="content-card">
-                <ul class="track-list" id="tracks-container">
-                    <li style="list-style: none;">
-                        <div class="placeholder-content">
-                            <p>A carregar músicas...</p>
+            <!-- Content Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <ul id="tracks-container" class="space-y-3">
+                    <li>
+                        <div class="text-center py-10 text-gray-500">
+                            <p class="mb-2">A carregar músicas...</p>
                         </div>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="modal-overlay" id="modal-overlay">
-            <div class="modal-dialog">
-                <div class="modal-header">
-                    <h2 class="modal-title">Escolher Música</h2>
-                    <button class="modal-close" id="close-modal-btn">&times;</button>
+        <!-- Modal Overlay (hidden by default) -->
+        <div id="modal-overlay" 
+            class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 modal-z-index hidden transition-opacity duration-300">
+            <div id="modal-dialog" 
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-900">Escolher Música</h2>
+                    <button id="close-modal-btn" 
+                            class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-2 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="modal-body">
-                    <input type="text" class="modal-search" id="modal-search"
-                        placeholder="Filtrar por título ou artista..." autocomplete="off">
-                    <div class="songs-list" id="modal-songs-list"></div>
+                
+                <!-- Modal Body -->
+                <div class="p-6 flex-1 overflow-hidden flex flex-col">
+                    <!-- Search Input -->
+                    <div class="mb-6">
+                        <input type="text" 
+                            id="modal-search"
+                            placeholder="Pesquisar por título ou artista..."
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all">
+                    </div>
+                    
+                    <!-- Songs List -->
+                    <div id="modal-songs-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                        <!-- Songs will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
+        
 
-        <div class="toast-notification" id="toast-message"></div>
+        <!-- Toast Notification -->
+        <div id="toast-message" 
+            class="fixed top-6 right-6 px-5 py-3 rounded-lg font-medium shadow-lg toast-notification hidden">
+            <!-- Message will be added by JavaScript -->
+        </div>
+    </div>
 
-        <script src="/js/setlist-management.js"></script>
+    <script src="js/setlist-management.js"></script>
 </body>
-
 </html>

@@ -361,3 +361,302 @@
     justify-content: center;
   }
 }
+
+/* ============================
+   Wrapper para song card + botão
+   ============================ */
+.song-card-wrapper {
+  position: relative;
+}
+
+.song-card-wrapper .song-card {
+  position: relative;
+  display: block;
+}
+
+/* ============================
+   Botão adicionar à setlist
+   ============================ */
+.add-to-setlist-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #64748b;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.add-to-setlist-btn:hover {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.add-to-setlist-btn:active {
+  transform: scale(0.95);
+}
+
+/* ============================
+   Modal overlay
+   ============================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+}
+
+/* ============================
+   Modal content
+   ============================ */
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+              0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.95) translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay.show .modal-content {
+  transform: scale(1) translateY(0);
+}
+
+/* ============================
+   Modal header
+   ============================ */
+.modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* ============================
+   Modal body
+   ============================ */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-song-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modal-song-title svg {
+  flex-shrink: 0;
+  color: #3b82f6;
+}
+
+/* ============================
+   Setlists list
+   ============================ */
+.setlists-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setlist-option {
+  width: 100%;
+  padding: 14px 16px;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  color: #334155;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.setlist-option svg:first-child {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.setlist-option span {
+  flex: 1;
+}
+
+.setlist-option .check-icon {
+  flex-shrink: 0;
+  opacity: 0;
+  color: #10b981;
+  transition: opacity 0.2s ease;
+}
+
+.setlist-option:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  color: #1e293b;
+}
+
+.setlist-option:hover svg:first-child {
+  color: #3b82f6;
+}
+
+.setlist-option:active {
+  transform: scale(0.98);
+}
+
+.setlist-option:active .check-icon {
+  opacity: 1;
+}
+
+.no-setlists {
+  text-align: center;
+  color: #64748b;
+  padding: 32px 16px;
+  font-size: 15px;
+}
+
+.no-setlists a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.no-setlists a:hover {
+  text-decoration: underline;
+}
+
+/* ============================
+   Notification
+   ============================ */
+.notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 10000;
+  transform: translateX(400px);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification-success {
+  background: #10b981;
+  color: white;
+}
+
+.notification-error {
+  background: #ef4444;
+  color: white;
+}
+
+/* ============================
+   Responsive adjustments
+   ============================ */
+@media (max-width: 768px) {
+  .add-to-setlist-btn {
+    width: 32px;
+    height: 32px;
+    top: 8px;
+    right: 8px;
+  }
+  
+  .add-to-setlist-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .modal-content {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 85vh;
+  }
+  
+  .notification {
+    left: 16px;
+    right: 16px;
+    top: 16px;
+    transform: translateY(-100px);
+  }
+  
+  .notification.show {
+    transform: translateY(0);
+  }
+}
