@@ -3,47 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerir Setlist - ChordPro</title>
+    <title>A minha biblioteca - ChordPro</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ícones do Heroicons -->
-    <script src="https://unpkg.com/@heroicons/react@2.0.18/outline/index.js"></script>
     <style>
-        /* Animações personalizadas */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* Progress bar styles */
+        .progress-bar {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
         }
         
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fb923c, #f97316);
+            transition: width 0.3s ease;
+            border-radius: 4px;
         }
         
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .upload-item {
+            transition: all 0.3s ease;
         }
         
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out;
+        .upload-item.success {
+            border-color: #10b981;
+            background-color: #f0f9ff;
         }
         
-        .animate-slide-in {
-            animation: slideIn 0.3s ease-out;
+        .upload-item.error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
         }
         
-        .animate-slide-up {
-            animation: slideUp 0.3s ease-out;
-        }
-        
-        /* Estilos personalizados para drag & drop */
-        .dragging {
-            opacity: 0.5;
-            border: 2px dashed #fb923c !important;
-        }
-        
-        /* Estilos para scroll */
+        /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -57,107 +50,592 @@
             background: #cbd5e1;
             border-radius: 10px;
         }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        
-        
-        /* Toast notification */
-        .toast-notification {
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-        }
-        
-        .toast-notification.show {
-            transform: translateX(0);
-        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <%- include('../../partials/navbar') %>
-
-    <div class="main-content">
-        <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-            <!-- Botão Voltar -->
-            <button onclick="window.history.back(); return false;" 
-                    class="inline-flex items-center text-orange-500 hover:text-orange-600 font-medium mb-6 transition-colors">
-                <span class="text-xl mr-2">←</span>
-                <span>Voltar</span>
-            </button>
-
-            <!-- Header Section -->
-            <div class="mb-8">
-                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <h1 id="setlist-title" class="text-3xl font-bold text-gray-900">A carregar...</h1>
-                        <span id="visibility-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"></span>
-                    </div>
-                    <button id="add-song-btn" 
-                            class="inline-flex items-center justify-center px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-orange-200 hover:-translate-y-0.5">
-                        + Adicionar Música
-                    </button>
+<body class="bg-stone-50 min-h-screen">
+    <%- include('../partials/navbar') %>
+    
+    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">A minha biblioteca</h1>
+                    <p class="text-gray-600 mt-2">Gerencie todas as suas músicas e partituras</p>
                 </div>
-                
-                <div id="statistics" class="flex flex-wrap gap-6">
-                    <!-- Estatísticas serão preenchidas por JavaScript -->
-                </div>
-            </div>
-
-            <!-- Content Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <ul id="tracks-container" class="space-y-3">
-                    <li>
-                        <div class="text-center py-10 text-gray-500">
-                            <p class="mb-2">A carregar músicas...</p>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Modal Overlay (hidden by default) -->
-        <div id="modal-overlay" 
-            class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 modal-z-index hidden transition-opacity duration-300">
-            <div id="modal-dialog" 
-                class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95">
-                <!-- Modal Header -->
-                <div class="flex items-center justify-between p-6 border-b border-gray-200">
-                    <h2 class="text-xl font-bold text-gray-900">Escolher Música</h2>
-                    <button id="close-modal-btn" 
-                            class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-2 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Modal Body -->
-                <div class="p-6 flex-1 overflow-hidden flex flex-col">
-                    <!-- Search Input -->
-                    <div class="mb-6">
-                        <input type="text" 
-                            id="modal-search"
-                            placeholder="Pesquisar por título ou artista..."
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all">
+                <div class="flex flex-wrap gap-3">
+                    <!-- Upload múltiplo com dropzone -->
+                    <div class="relative">
+                        <input 
+                            type="file" 
+                            id="fileInput" 
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            accept=".chopro,.chordpro,.cho,.crd,.pro,.txt"
+                            multiple
+                            onchange="handleFileSelection(this.files)"
+                        >
+                        <button class="inline-flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Carregar ficheiros
+                        </button>
+                        <div id="file-count-badge" class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center hidden">0</div>
                     </div>
                     
-                    <!-- Songs List -->
-                    <div id="modal-songs-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-                        <!-- Songs will be populated by JavaScript -->
-                    </div>
+                    <button onclick="window.location.href='/editor'" 
+                            class="inline-flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-orange-200 hover:-translate-y-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nova música
+                    </button>
                 </div>
             </div>
+            
+            <!-- Upload progress container (hidden by default) -->
+            <div id="upload-container" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Upload em progresso</h2>
+                    <button onclick="cancelAllUploads()" class="text-gray-500 hover:text-gray-700 text-sm font-medium">
+                        Cancelar todos
+                    </button>
+                </div>
+                
+                <!-- Overall progress -->
+                <div id="overall-progress" class="mb-6">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Progresso total</span>
+                        <span id="overall-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="overall-progress-fill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- File list -->
+                <div id="file-list" class="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+                    <!-- Files will be added here dynamically -->
+                </div>
+            </div>
+            
+            <!-- Message display -->
+            <div id="message" class="hidden rounded-lg p-4 mb-6"></div>
         </div>
-        
 
-        <!-- Toast Notification -->
-        <div id="toast-message" 
-            class="fixed top-6 right-6 px-5 py-3 rounded-lg font-medium shadow-lg toast-notification hidden">
-            <!-- Message will be added by JavaScript -->
+        <!-- Songs container -->
+        <div id="songsContainer">
+            <div class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4"></div>
+                <p class="text-gray-500">A carregar...</p>
+            </div>
         </div>
     </div>
 
-    <script src="js/setlist-management.js"></script>
+    <script>
+        // ============================
+        // Variáveis globais
+        // ============================
+        let uploadQueue = [];
+        let activeUploads = 0;
+        const MAX_CONCURRENT_UPLOADS = 3; // Número máximo de uploads simultâneos
+
+        // ============================
+        // Inicialização
+        // ============================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSongs();
+            setupDragAndDrop();
+        });
+
+        // ============================
+        // Drag and Drop
+        // ============================
+        function setupDragAndDrop() {
+            const dropZone = document.body;
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-orange-50', 'border-2', 'border-dashed', 'border-orange-300');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                if (!dropZone.contains(e.relatedTarget)) {
+                    dropZone.classList.remove('bg-orange-50', 'border-2', 'border-dashed', 'border-orange-300');
+                }
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-orange-50', 'border-2', 'border-dashed', 'border-orange-300');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    handleFileSelection(e.dataTransfer.files);
+                }
+            });
+        }
+
+        // ============================
+        // Handle file selection
+        // ============================
+        function handleFileSelection(files) {
+            if (files.length === 0) return;
+            
+            // Update file count badge
+            const badge = document.getElementById('file-count-badge');
+            badge.textContent = files.length;
+            badge.classList.remove('hidden');
+            
+            // Add files to upload queue
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check file extension
+                const ext = file.name.toLowerCase().split('.').pop();
+                const validExtensions = ['chopro', 'chordpro', 'cho', 'crd', 'pro', 'txt'];
+                
+                if (!validExtensions.includes(ext)) {
+                    showMessage(`Ficheiro "${file.name}" tem extensão inválida. Extensões permitidas: ${validExtensions.join(', ')}`, 'error');
+                    continue;
+                }
+                
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showMessage(`Ficheiro "${file.name}" é muito grande (máx: 10MB)`, 'error');
+                    continue;
+                }
+                
+                const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                
+                uploadQueue.push({
+                    id: fileId,
+                    file: file,
+                    status: 'queued',
+                    progress: 0,
+                    error: null
+                });
+            }
+            
+            // Show upload container
+            showUploadContainer();
+            
+            // Process queue
+            processUploadQueue();
+        }
+
+        // ============================
+        // Upload queue processing
+        // ============================
+        async function processUploadQueue() {
+            while (uploadQueue.length > 0 && activeUploads < MAX_CONCURRENT_UPLOADS) {
+                const fileObj = uploadQueue.shift();
+                activeUploads++;
+                await uploadFile(fileObj);
+            }
+            
+            // Update overall progress
+            updateOverallProgress();
+            
+            // Hide container if all uploads are done
+            if (uploadQueue.length === 0 && activeUploads === 0) {
+                setTimeout(() => {
+                    const container = document.getElementById('upload-container');
+                    if (container) {
+                        container.classList.add('hidden');
+                        document.getElementById('file-count-badge').classList.add('hidden');
+                    }
+                }, 2000);
+            }
+        }
+
+        // ============================
+        // Upload individual file
+        // ============================
+        async function uploadFile(fileObj) {
+            // Create file item in UI
+            createFileItem(fileObj);
+            
+            const formData = new FormData();
+            formData.append('file', fileObj.file);
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                // Progress tracking
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const progress = Math.round((e.loaded / e.total) * 100);
+                        updateFileProgress(fileObj.id, progress, 'uploading');
+                    }
+                });
+                
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        updateFileProgress(fileObj.id, 100, 'success');
+                        showMessage(`"${fileObj.file.name}" carregado com sucesso!`, 'success');
+                    } else {
+                        const response = JSON.parse(xhr.responseText);
+                        updateFileProgress(fileObj.id, 0, 'error', response.message || 'Erro no upload');
+                        showMessage(`Erro ao carregar "${fileObj.file.name}"`, 'error');
+                    }
+                    
+                    activeUploads--;
+                    processUploadQueue(); // Start next upload
+                    updateOverallProgress();
+                });
+                
+                xhr.addEventListener('error', () => {
+                    updateFileProgress(fileObj.id, 0, 'error', 'Erro de conexão');
+                    activeUploads--;
+                    processUploadQueue();
+                    updateOverallProgress();
+                });
+                
+                // Start upload
+                xhr.open('POST', '/api/songs/upload', true);
+                xhr.withCredentials = true;
+                xhr.send(formData);
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                updateFileProgress(fileObj.id, 0, 'error', 'Erro inesperado');
+                activeUploads--;
+                processUploadQueue();
+                updateOverallProgress();
+            }
+        }
+
+        // ============================
+        // UI functions for uploads
+        // ============================
+        function showUploadContainer() {
+            const container = document.getElementById('upload-container');
+            container.classList.remove('hidden');
+        }
+
+        function createFileItem(fileObj) {
+            const fileList = document.getElementById('file-list');
+            
+            const fileItem = document.createElement('div');
+            fileItem.id = fileObj.id;
+            fileItem.className = 'upload-item bg-gray-50 border border-gray-200 rounded-lg p-4';
+            fileItem.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-lg">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-medium text-gray-900 truncate">${escapeHtml(fileObj.file.name)}</div>
+                            <div class="text-sm text-gray-500">${formatFileSize(fileObj.file.size)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="${fileObj.id}-status" class="text-sm font-medium text-gray-600">Na fila</span>
+                        <button onclick="cancelUpload('${fileObj.id}')" class="text-gray-400 hover:text-red-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div id="${fileObj.id}-progress-fill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div id="${fileObj.id}-error" class="text-sm text-red-600 mt-2 hidden"></div>
+            `;
+            
+            fileList.appendChild(fileItem);
+        }
+
+        function updateFileProgress(fileId, progress, status, errorMessage = null) {
+            const fileItem = document.getElementById(fileId);
+            if (!fileItem) return;
+            
+            const progressFill = document.getElementById(`${fileId}-progress-fill`);
+            const statusElement = document.getElementById(`${fileId}-status`);
+            const errorElement = document.getElementById(`${fileId}-error`);
+            
+            if (progressFill) progressFill.style.width = `${progress}%`;
+            
+            if (statusElement) {
+                let statusText = '';
+                let statusColor = '';
+                
+                switch(status) {
+                    case 'queued':
+                        statusText = 'Na fila';
+                        statusColor = 'text-gray-600';
+                        break;
+                    case 'uploading':
+                        statusText = `${progress}%`;
+                        statusColor = 'text-orange-600';
+                        break;
+                    case 'success':
+                        statusText = 'Concluído ✓';
+                        statusColor = 'text-green-600';
+                        fileItem.classList.add('success');
+                        break;
+                    case 'error':
+                        statusText = 'Erro ✗';
+                        statusColor = 'text-red-600';
+                        fileItem.classList.add('error');
+                        if (errorMessage && errorElement) {
+                            errorElement.textContent = errorMessage;
+                            errorElement.classList.remove('hidden');
+                        }
+                        break;
+                }
+                
+                statusElement.textContent = statusText;
+                statusElement.className = `text-sm font-medium ${statusColor}`;
+            }
+        }
+
+        function updateOverallProgress() {
+            const totalFiles = uploadQueue.length + activeUploads;
+            if (totalFiles === 0) return;
+            
+            // Calculate completed files
+            const completedFiles = Array.from(document.querySelectorAll('.upload-item'))
+                .filter(item => item.querySelector('.text-green-600')).length;
+            
+            const percentage = Math.round((completedFiles / totalFiles) * 100);
+            
+            const progressFill = document.getElementById('overall-progress-fill');
+            const percentageElement = document.getElementById('overall-percentage');
+            
+            if (progressFill) progressFill.style.width = `${percentage}%`;
+            if (percentageElement) percentageElement.textContent = `${percentage}%`;
+        }
+
+        function cancelUpload(fileId) {
+            // Remove from queue
+            uploadQueue = uploadQueue.filter(item => item.id !== fileId);
+            
+            // Remove from UI
+            const fileItem = document.getElementById(fileId);
+            if (fileItem) {
+                fileItem.remove();
+            }
+            
+            // Update overall progress
+            updateOverallProgress();
+        }
+
+        function cancelAllUploads() {
+            uploadQueue = [];
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            
+            const container = document.getElementById('upload-container');
+            container.classList.add('hidden');
+            
+            document.getElementById('file-count-badge').classList.add('hidden');
+            showMessage('Todos os uploads foram cancelados', 'info');
+        }
+
+        // ============================
+        // Song management functions
+        // ============================
+        async function loadSongs() {
+            const container = document.getElementById('songsContainer');
+
+            try {
+                const response = await fetch('/api/songs', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    console.error('Resposta do servidor:', response.status, response.statusText);
+                    showMessage('Erro ao carregar músicas do servidor', 'error');
+                    return;
+                }
+
+                const songs = await response.json();
+
+                if (songs.length === 0) {
+                    showEmptyState(container);
+                } else {
+                    displaySongs(songs);
+                }
+
+            } catch (error) {
+                console.error('Erro ao carregar músicas:', error);
+                showMessage('Não conseguimos carregar a tua biblioteca', 'error');
+            }
+        }
+
+        function showEmptyState(container) {
+            container.innerHTML = `
+                <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-100 text-orange-600 rounded-full mb-6">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">A tua biblioteca está vazia</h2>
+                    <p class="text-gray-600 mb-8 max-w-md mx-auto">Começa por carregar ficheiros ChordPro ou criar uma nova música</p>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <button class="inline-flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                                onclick="document.getElementById('fileInput').click()">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Carregar ficheiros
+                        </button>
+                        <button onclick="window.location.href='/editor'" 
+                                class="inline-flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Criar nova música
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displaySongs(songs) {
+            const container = document.getElementById('songsContainer');
+            container.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>';
+            const grid = container.querySelector('.grid');
+
+            songs.forEach(song => {
+                const card = createSongCard(song);
+                grid.appendChild(card);
+            });
+        }
+
+        function createSongCard(song) {
+            const date = new Date(song.created_at);
+            const formattedDate = date.toLocaleDateString('pt-PT', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200';
+            card.innerHTML = `
+                <div class="p-5">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2 cursor-pointer hover:text-orange-600 transition-colors" 
+                        onclick="viewSong(${song.id})">${escapeHtml(song.title)}</h3>
+                    <div class="text-gray-600 mb-3">${song.artist ? escapeHtml(song.artist) : 'Artista desconhecido'}</div>
+                    <div class="text-sm text-gray-500 mb-5">Adicionado em ${formattedDate}</div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="viewSong(${song.id})" 
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            Ver
+                        </button>
+                        <button onclick="openEditor(${song.id})" 
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Editar
+                        </button>
+                        <button onclick="deleteSong(${song.id})" 
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // ============================
+        // Song navigation functions
+        // ============================
+        function viewSong(songId) {
+            window.location.href = `/viewer/${songId}`;
+        }
+
+        function openEditor(songId) {
+            window.location.href = `/editor/${songId}`;
+        }
+
+        async function deleteSong(songId) {
+            if (!confirm('Tens a certeza que queres eliminar esta música?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/songs/${songId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    loadSongs();
+                } else {
+                    showMessage(data.message || 'Erro ao eliminar música', 'error');
+                }
+
+            } catch (error) {
+                console.error('Erro ao eliminar:', error);
+                showMessage('Não conseguimos eliminar a música', 'error');
+            }
+        }
+
+        // ============================
+        // Utility functions
+        // ============================
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = '';
+            
+            switch(type) {
+                case 'success':
+                    messageDiv.classList.add('bg-green-50', 'text-green-800', 'border', 'border-green-200');
+                    break;
+                case 'error':
+                    messageDiv.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+                    break;
+                case 'info':
+                    messageDiv.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
+                    break;
+                default:
+                    messageDiv.classList.add('bg-gray-50', 'text-gray-800', 'border', 'border-gray-200');
+            }
+            
+            messageDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>
