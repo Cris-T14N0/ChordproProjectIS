@@ -5,6 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A minha biblioteca - ChordPro</title>
     <link rel="stylesheet" href="/css/library.css">
+    <style>
+        .search-section {
+            margin-bottom: 24px;
+        }
+        
+        .search-container {
+            position: relative;
+            max-width: 600px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 48px 12px 48px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #fb923c;
+            box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.1);
+        }
+        
+        .clear-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .clear-btn:hover {
+            background: #e2e8f0;
+        }
+        
+        .search-results-info {
+            margin-bottom: 16px;
+            color: #64748b;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body style="margin: 0; background: #fafaf9;">
     <%- include('../partials/navbar') %>
@@ -27,6 +91,28 @@
                         Nova música
                     </button>
                 </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-container">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input 
+                        type="text" 
+                        id="librarySearchInput" 
+                        class="search-input" 
+                        placeholder="Pesquisar nas minhas músicas..."
+                        autocomplete="off"
+                    >
+                    <button id="clearLibrarySearch" class="clear-btn">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="searchResultsInfo" class="search-results-info" style="display: none;"></div>
             </div>
 
             <input

@@ -10,6 +10,7 @@ let allAvailableSongs = [];
 // INICIALIZAÇÃO
 // ===============================================
 document.addEventListener('DOMContentLoaded', async () => {
+    
     // Pegar ID da setlist do URL
     const urlParams = new URLSearchParams(window.location.search);
     currentSetlistId = urlParams.get('id');

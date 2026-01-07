@@ -43,6 +43,3 @@ Of the [C]years.    [(][pause][)]     [G]ba-ay-ay-[D]by.
 [G]Just touch my [C]cheek before you [D]leave me, [Cmaj7]dar - ar - [G]lin’. 
 
 [G] [C]     [D]     [C][-][D][,]     [|][G][|]
- 
-
-

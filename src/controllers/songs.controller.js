@@ -611,7 +611,8 @@ async function searchSongs(req, res) {
             return res.json([]);
         }
 
-        const songs = await SongModel.search(userId, q);
+        // Use searchAll para dashboard (minhas + públicas de outros)
+        const songs = await SongModel.searchAll(userId, q);
 
         res.json(songs);
 

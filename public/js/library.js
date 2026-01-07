@@ -196,10 +196,6 @@ async function uploadFiles(files) {
 }
 
 // ============================
-// Funções Auxiliares para Upload
-// ============================
-
-// ============================
 // Drag and Drop
 // ============================
 
@@ -449,3 +445,100 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Search functionality for library
+let allSongs = []; // Store all songs for filtering
+let searchTimeout;
+
+const librarySearchInput = document.getElementById('librarySearchInput');
+const clearLibrarySearch = document.getElementById('clearLibrarySearch');
+const searchResultsInfo = document.getElementById('searchResultsInfo');
+
+// Intercept the original loadSongs to store songs
+const originalLoadSongs = window.loadSongs;
+window.loadSongs = async function () {
+    const container = document.getElementById('songsContainer');
+
+    try {
+        const response = await fetch('/api/songs', {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            console.error('Resposta do servidor:', response.status, response.statusText);
+            showMessage('Erro ao carregar músicas do servidor', 'error');
+            return;
+        }
+
+        allSongs = await response.json();
+        displayFilteredSongs(allSongs);
+
+    } catch (error) {
+        console.error('Erro ao carregar músicas:', error);
+        showMessage('Não conseguimos carregar a tua biblioteca', 'error');
+    }
+};
+
+// Display filtered songs
+function displayFilteredSongs(songs) {
+    const container = document.getElementById('songsContainer');
+
+    if (songs.length === 0) {
+        const query = librarySearchInput.value.trim();
+        if (query) {
+            container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h2>Nenhuma música encontrada</h2>
+                            <p>Tenta pesquisar por outro termo</p>
+                        </div>
+                    `;
+        } else {
+            showEmptyState(container);
+        }
+    } else {
+        displaySongs(songs);
+    }
+}
+
+// Search function
+function performLibrarySearch(query) {
+    if (!query || query.trim().length === 0) {
+        searchResultsInfo.style.display = 'none';
+        displayFilteredSongs(allSongs);
+        return;
+    }
+
+    const searchTerm = query.trim().toLowerCase();
+    const filtered = allSongs.filter(song => {
+        const title = (song.title || '').toLowerCase();
+        const artist = (song.artist || '').toLowerCase();
+        return title.includes(searchTerm) || artist.includes(searchTerm);
+    });
+
+    searchResultsInfo.style.display = 'block';
+    searchResultsInfo.textContent = `${filtered.length} ${filtered.length === 1 ? 'música encontrada' : 'músicas encontradas'} para "${query}"`;
+
+    displayFilteredSongs(filtered);
+}
+
+// Event listeners
+librarySearchInput.addEventListener('input', (e) => {
+    const query = e.target.value;
+    clearLibrarySearch.style.display = query.length > 0 ? 'flex' : 'none';
+
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        performLibrarySearch(query);
+    }, 300);
+});
+
+clearLibrarySearch.addEventListener('click', () => {
+    librarySearchInput.value = '';
+    clearLibrarySearch.style.display = 'none';
+    searchResultsInfo.style.display = 'none';
+    displayFilteredSongs(allSongs);
+    librarySearchInput.focus();
+});
